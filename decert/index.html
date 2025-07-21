@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestion des cas</title>
+    
+    <!-- import des feuilles de style externes -->
+    <!-- Flatpickr (gestion des calendriers) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Font-Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css">
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+   
+    <!-- définition des styles utilisés dans les composants html de l'application -->
+    <style>
+      body {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+      }
+      .fixed-menu {
+          position: fixed;
+          top: 0;
+          width: 100%;
+          background-color: #f8f9fa;
+          padding: 2px 0;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+      }
+      .fixed-menu .btn {
+          margin: 0 auto;
+          display: block;
+      }
+      
+      .label-small {
+        font-size: 0.75rem;
+      }
+
+      .fixed-header {
+          position: fixed;
+          top: 0;
+          width: 100%;
+          background-color: #f8f9fa;
+          padding: 10px 0;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+      }
+
+      .fixed-header h1 {
+          margin: 0;
+          text-align: center;
+      }
+
+      .form-container {
+          flex: 1;
+          overflow-y: auto;
+          padding-top: 80px;
+          padding-bottom: 60px;
+      }
+
+      .fixed-footer {
+          position: fixed;
+          bottom: 0;
+          width: 100%;
+          background-color: #f8f9fa;
+          padding: 10px 0;
+          box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+          z-index: 1000
+      }
+
+      .fixed-footer .btn {
+          margin: 0 auto;
+          display: block;
+      }
+
+      .spinner-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(255, 255, 255, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1050;
+      }
+
+      .modal-content {
+        border: 2px solid red;
+        border-radius: 10px;
+      }
+      .modal-header {
+        background-color: red; /* Couleur de fond rouge */
+        color: white; /* Texte en blanc pour un bon contraste */
+      }
+      .modal-footer {
+        border-top: none; /* Supprimer la bordure supérieure */
+      }
+
+      .warning {
+          border-color: #dc3545; /* !! différent de la valeur 'red' !! */
+          box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+      }
+
+      .btn-outline-secondary :{
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          width: 2.5rem; /* Bouton carré */
+      }
+
+      .map {
+          width: 100%;
+          height: 19rem;
+          margin: auto;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+      }
+
+      .address {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+      }
+      .selection {
+          border: 2px solid lightsteelblue;
+          background-color: white;
+          border-radius: 10px;
+          position: absolute;
+          top: 102%;
+          width: 100%;
+          z-index: 999;
+      }
+      .selection ul {
+          margin: 2px;
+          padding: 2px;
+      }
+      .selection li {
+          cursor: pointer;
+          list-style-type: none;
+          display: flex;
+          flex-direction: column;
+      }
+      .selection li:hover {
+          background-color: lightsteelblue;
+      }
+    </style>
+</head>
+<body>
+
+    <!-- Import des scritps externes requis par l'application -->
+	<script src="decert.js"></script>
+    <!-- JQuery (gestion du javascript côté client) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- API GRIST (gestion des appels à l'API GRIST -->
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <!-- Leaflet (gestion de la carte) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
+    <!-- Bootstrap (gestion des composants 'bootstrap' utilisés dans la page HTML) -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Flatpickr (gestion des calendriers utilisés dans la page HTML) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/fr.min.js"></script>
+    <!-- HTML2Canvas & jsPDF (gestion PDF) -->
+	  <script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+	  <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+
+    <!-- définition des composants HTML utilisés par l'application -->
+
+    <!--
+          Composants de la vue 'Menu' 
+    -->
+    <div id="viewMenu" class="fixed-menu" style="display: block;">
+      <div class="form-row mb-0">
+        <div class="col-6">
+          <button id="btEdit" type="button" class="btn btn-primary" onclick="editCurrent()">Editer</button>
+        </div>
+        <div class="col-6">
+          <button id="btAdd" type="button" class="btn btn-primary" onclick="addNew()">Créer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 
+          Composants de la vue 'formulaire'
+    --> 
+    <div id="viewForm" style="display: none;">
+
+      <!-- La boîte modale -->
+      <div class="modal fade" id="ModalBox" tabindex="-1" role="dialog" aria-labelledby="modalBoxlLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalBoxlLabel">Titre</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Fermer">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>...<p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Le spinner --> 
+      <div id="loadingSpinner" class="spinner-overlay" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Chargement...</span>
+        </div>
+      </div>
+
+      <!-- L'entête du formulaire -->
+      <div class="fixed-header">
+          <h1>Déclarer un cas</h1>
+      </div>
+
+      <!-- Le corps du formulaire --> 
+      <div class="container mt-0 form-container">
+          <form id="declarationForm">
+              <div class="form-row mb-0">
+                  <div class="col-lg-2">
+                      <label for="caseNumber" class="label-small">N° de cas</label>
+                      <input type="text" id="caseNumber" name="caseNumber" class="form-control" disabled>
+                  </div>
+                  <div class="col-lg-2">
+                      <label for="serotype" class="label-small">Sérotype</label>
+                      <select id="serotype" name="serotype" class="form-control" required>
+                          <option value="" disabled selected></option>
+                      </select>
+                  </div>
+                  <div class="col-lg-2">
+                      <label for="caseType" class="label-small">Type de cas</label>
+                      <select id="caseType" name="caseType" class="form-control" required>
+                          <option value="" disabled selected>&#9888 Sélectionnez...</option>
+                          <option value="Cas Suspect">Cas Suspect</option>
+                          <option value="Cas Confirmé">Cas Confirmé</option>
+                          <option value="Cas Infirmé">Cas Infirmé</option>
+                      </select>
+                  </div>
+                  <div class="col-lg-2">
+                      <label for="suspicionDate" class="label-small">Date de suspicion</label>
+                      <div class="input-group datepicker">
+                        <input type="date" id="suspicionDate" name="suspicionDate" class="form-control" data-input disabled>
+                        <div class="input-group-append" data-toggle>
+                          <button type="button" class="btn btn-outline-secondary">
+                            <i class="fa fa-calendar-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                  </div>
+                  <div class="col-lg-2">
+                      <label for="confirmationDate" class="label-small">Date de confirmation</label>
+                      <div class="input-group datepicker">
+                        <input type="date" id="confirmationDate" name="confirmationDate" class="form-control" data-input disabled>
+                        <div class="input-group-append" data-toggle>
+                          <button type="button" class="btn btn-outline-secondary">
+                            <i class="fa fa-calendar-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                  </div>
+                  <div class="col-lg-2">
+                      <label for="infirmationDate" class="label-small">Date d'infirmation</label>
+                      <div class="input-group datepicker">
+                        <input type="date" id="infirmationDate" name="infirmationDate" class="form-control" data-input disabled>
+                        <div class="input-group-append" data-toggle>
+                          <button type="button" class="btn btn-outline-secondary">
+                            <i class="fa fa-calendar-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="form-row mb-0">
+                  <div class="col-lg-4">
+                      <label for="speciesGroup" class="label-small">Groupe d'espèce</label>
+                      <select id="speciesGroup" name="speciesGroup" class="form-control" required>
+                          <option value="" disabled selected></option>
+                      </select>
+                  </div>
+                  <div class="col-lg-4">
+                      <label for="species" class="label-small">Espèce</label>
+                      <select id="species" name="species" class="form-control" disabled>
+                          <option value="" disabled selected></option>
+                      </select>
+                  </div>
+                  <div class="col-lg-2">
+                      <label for="farmingType" class="label-small">Type d'élevage</label>
+                      <select id="farmingType" name="farmingType" class="form-control" required>
+                          <option value="" disabled selected>&#9888 Sélectionnez....</option>
+                          <option value="Allaitant">Allaitant</option>
+                          <option value="Laitier">Laitier</option>
+                          <option value="Mixte">Mixte</option>
+                          <option value="Particulier">Particulier</option>
+                      </select>
+                  </div>
+                  <div class="col-lg-2">
+                      <label for="edeNumber" class="label-small">N° EDE</label>
+                      <input type="text" id="edeNumber" name="edeNumber" class="form-control" minlength="8" maxlength="8">
+                  </div>
+              </div>
+
+              <div class="form-row mb-0">
+                  <div class="col-lg-6">
+                    <div class="form-row mb-0">
+                        <div class="col-lg-6">
+                            <label for="siretNumber" class="label-small">N° SIRET</label>
+                            <div class="input-group">
+                                <input type="text" id="siretNumber" name="siretNumber" class="form-control" data-toggle="tooltip" data-placement="bottom" title="Veuillez compléter ce champ." minlength="14" maxlength="14" placeholder="&#9888 si pas de NUMAGRIT">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" data-toggle="tooltip" data-placement="bottom" title="interroger la base SIRENE." onclick="chercheSIRET()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <label for="nagritNumber" class="label-small">NUMAGRIT</label>
+                            <div class="input-group">
+                                <input type="text" id="nagritNumber" name="nagritNumber" class="form-control" data-toggle="tooltip" data-placement="bottom" title="Veuillez compléter ce champ." minlength="10" maxlength="14" placeholder="&#9888 si pas de n°SIRET">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="establishmentName" class="label-small">Dénomination établissement</label>
+                        <textarea type="text" id="establishmentName" name="establishmentName" class="form-control" style="resize: none; height: 60px" required placeholder="&#9888"></textarea>
+                    </div>
+                    <div class="form-group mb-0">
+                      <div class="address">
+                        <label for="address" class="label-small">Adresse</label>
+                        <textarea type="text" id="address" name="address" class="form-control" style="resize: none; height: 60px" required placeholder="&#9888"></textarea>
+                        <div id="selection" style="display: none;" class="selection"></div>
+                      </div>
+                    </div>
+
+                    <div class="form-row mb-0">
+                      <div class="col-lg-2">
+                          <label for="postalCode" class="label-small">Code Postal</label>
+                          <input type="text" id="postalCode" name="postalCode" class="form-control" required placeholder="&#9888">
+                      </div>
+                      <div class="col-lg-10">
+                          <label for="city" class="label-small">Commune</label>
+                          <input type="text" id="city" name="city" class="form-control" required placeholder="&#9888">
+                      </div>
+                    </div>
+                    <div class="form-row mb-0">
+                      <div class="col-lg-12">
+                          <label for="department" class="label-small">Département</label>
+                          <input type="text" id="department" name="department" class="form-control" disabled>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="form-row mb-2">
+                      <div class="col-lg-1">
+                      </div>
+                      <div class="col-lg-5">
+                          <label for="longitude" class="label-small">Longitude</label>
+                          <input type="number" id="longitude" name="longitude" class="form-control" required step="0.00001" placeholder="&#9888">
+                      </div>
+                      <div class="col-lg-5">
+                          <label for="latitude" class="label-small">Latitude</label>
+                          <input type="number" id="latitude" name="latitude" class="form-control" required step="0.00001" placeholder="&#9888">
+                      </div>
+                      <div class="col-lg-1">
+                          <label class="label-small">Localiser</label>
+                          <button type="button" class="btn btn-outline-secondary"  data-toggle="tooltip" data-placement="bottom" title="Localiser sur la carte." onclick="setMarker()">
+                            <i class="fas fa-search"></i>
+                          </button>
+                      </div>
+                    </div>
+                    <div class="form-row mb-0">
+                      <div class="col-lg-12">
+                        <div class="map" id="viewerDiv"></div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+              <div class="form-row mt-2">
+                <div class="col-lg-6">
+                  <div id="createdTag" class="input-group" hidden>
+                    <h6 class="font-italic text-muted label-small">Créé le&nbsp;</h6>
+                    <span class="input-group-addon"></span>
+                    <h6 id="createdDate" class="font-italic text-muted label-small"></h6>
+                    <span class="input-group-addon"></span>
+                    <h6 class="font-italic text-muted label-small">&nbsp;par&nbsp;</h6>
+                    <span class="input-group-addon"></span>
+                    <h6 id="createdUser" class="font-italic text-muted label-small"></h6>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div id="updatedTag" class="input-group" hidden>
+                    <h6 class="font-italic text-muted label-small">Modifié le&nbsp;</h6>
+                    <span class="input-group-addon"></span>
+                    <h6 id="updatedDate" class="font-italic text-muted label-small"></h6>
+                    <span class="input-group-addon"></span>
+                    <h6 class="font-italic text-muted label-small">&nbsp;par&nbsp;</h6>
+                    <span class="input-group-addon"></span>
+                    <h6 id="updatedUser" class="font-italic text-muted label-small"></h6>
+                  </div>
+                </div>
+              </div>
+          </form>
+        </div>
+
+      <!-- Le pied du formulaire -->
+      <div class="fixed-footer">
+        <div class="form-row mb-0">
+          <div class="col-6">
+            <button type="button" class="btn btn-primary" onclick="validateForm()">Valider</button>
+          </div>
+          <div class="col-6">
+            <button id="btAdd" type="button" class="btn btn-primary" onclick="printForm()">PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ------------------------------------------------------------------------------------
+      // fonction actualisant l'affichage sur l'évènement de redimensionnement de la fenêtre
+      // ------------------------------------------------------------------------------------
+      function reportWindowSize() {
+        // si la hauteur de la fenêtre est de plus de 300 pixels et que le mode de vue actuel est 'Menu'
+        if (window.innerHeight > 300 && viewMode == vMenu) {
+          // alors si le mode de vue souhaité est la vue formulaire (édition ou création)
+          if (viewChange == vEdit || viewChange == vNew) {
+            // cacher le menu et montrer le formulaire
+            document.getElementById('viewMenu').style.display = "none"; 
+            document.getElementById('viewForm').style.display = "block";
+            // gérer l'initialisation du formulaire
+            switch (viewChange) {
+              // initialiser en mode 'édition'
+              case vEdit:
+                viewMode = viewChange;
+                viewChange = '';
+                getCurrentRecord();
+                break;
+              // initialiser en mode 'création'
+              case vNew:
+                viewMode = viewChange;
+                viewChange = '';
+                initForm();
+                break;
+            }
+          }
+        // sinon si hauteur de la fenêtre inférieure à 300 pixel et que le mode de vue actuel est différent de 'Menu'
+        } else if (window.innerHeight <= 300 && viewMode != vMenu) {
+          // cacher le formulaire et montrer le menu
+          document.getElementById('viewForm').style.display = "none";
+          document.getElementById('viewMenu').style.display = "block";
+          // affecter la valeur 'menu' au mode de vue
+          viewMode = vMenu;
+          viewChange = '';       
+        }
+      }
+
+      // ------------------------------------------------------------------------------------
+      // fonction gérant l'évènement de clic sur le bouton 'Editer' du menu
+      // ------------------------------------------------------------------------------------
+      function editCurrent() {
+        // affecter la valeur 'édition' au mode de vue souhaité (ie formulaire en mode édition)
+        viewChange = vEdit;
+        // actualiser la fenêtre en sélectionnant ce widget en mode extension
+        // (déclenche un évènement de redimensionnement de la fenêtre)
+        window.top.location.href = 'https://grist.numerique.gouv.fr/o/decert/dR5wei9yNo7n/FCO/p/6#a2.s91';
+      }
+
+      // ------------------------------------------------------------------------------------
+      // fonction gérant l'évènement de clic sur le bouton 'Créer' du menu
+      // ------------------------------------------------------------------------------------
+      function addNew() {
+        // affecter la valeur 'création' au mode de vue souhaité (ie formulaire en mode création)
+        viewChange = vNew;
+        // actualiser la fenêtre en sélectionnant ce widget en mode extension
+        // (déclenche un évènement de redimensionnement de la fenêtre)
+        window.top.location.href = 'https://grist.numerique.gouv.fr/o/decert/dR5wei9yNo7n/FCO/p/6#a2.s91';
+      }
+
+      // ------------------------------------------------------------------------------------
+      // gérer les initialisations sur l'évènement 'chargement du document'
+      // ------------------------------------------------------------------------------------
+      document.addEventListener('DOMContentLoaded', () => {
+
+        // initialiser l'affichage en mode menu
+        document.getElementById('viewForm').style.display = "none"
+        document.getElementById('viewMenu').style.display = "block";
+        viewMode = vMenu;
+        viewChange = '';     
+
+        // initialiser la gestion de la modification de la taille de la fenêtre
+        window.onresize = reportWindowSize;
+
+        // initialiser les valeurs des listes déroulantes
+        getSpeciesGroup();
+        getSpecies();
+        getSerotype();
+
+        // initialiser la gestion du calendrier pour les champs de type date
+        flatpickr('.datepicker', {
+          dateFormat: 'd/m/Y',
+          allowInput: true,
+          wrap: true,
+          maxDate: 'today',
+          locale: "fr",
+          disableMobile: "true"
+        });
+
+        // initialiser la gestion de l'évènement déplacement du pointeur sur la carte
+        marker.on("drag", (e) => {dragMarker(e)});
+
+        // initialiser la gestion des évènements de la liste des adresses proposées
+        const adresse = document.getElementById("address");
+        // - évènement de saisie dans le champ : appeler la fonction de recherche des adresses
+        adresse.addEventListener("input", getAucompletion, false);
+        // - évènement de sortie du champ : masquer la liste des adresses proposées
+        adresse.addEventListener("change", (event) => {
+          setTimeout(function(){
+            document.getElementById("selection").style.display = "none"
+          }, 200);
+        });
+        
+        // initialiser la gestion de l'évènement de mise à jour du type de cas
+        const caseType = document.getElementById('caseType');
+        caseType.addEventListener('change', updateTypeCas);
+
+        // initialiser la gestion de l'évènement modification de la longitude
+        const longitude = document.getElementById('longitude');
+        longitude.addEventListener('input', function (e) {
+          const lng = e.target.value;
+          // vérifier si le nombre de décimales dépasse 5
+          if (lng.includes(".") && lng.split(".")[1].length > 5) {
+            // si oui alors tronquer à décimales
+            e.target.value = parseFloat(lng).toFixed(5);
+          }
+        });
+
+        // initialiser la gestion de l'évènement modification de la latitude
+        const latitude = document.getElementById('latitude');
+        latitude.addEventListener('input', function (e) {
+          const lat = e.target.value;
+          // vérifier si le nombre de décimales dépasse 5
+          if (lat.includes(".") && lat.split(".")[1].length > 5) {
+            // si oui alors tronquer à décimales
+            e.target.value = parseFloat(lat).toFixed(5);
+          }
+        });
+          
+      });
+    </script>
+</body>
+</html>
