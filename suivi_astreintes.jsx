@@ -140,6 +140,7 @@ const Component = () => {
   };
 
   const getAstreintesForCurrentView = () => {
+
     // Commencer par les services autorisés
     const servicesAutorises = getServicesAutorises();
     const servicesAutoriseIds = servicesAutorises.map(s => s.id);
@@ -168,13 +169,13 @@ const Component = () => {
       });
     } else if (viewMode === 'semaine') {
       const startOfWeek = new Date(currentDate);
-	  // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
+      // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
       const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
       const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
     
       const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      endOfWeek.setDate(endOfWeek.getDate() + 7); // +7 pour avoir le dernier jour
     
       filteredAstreintes = filteredAstreintes.filter(a => {
         const aDate = new Date(a.Date * 1000);

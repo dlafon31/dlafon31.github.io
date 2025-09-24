@@ -131,7 +131,7 @@ const Component = () => {
       startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
     
       const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      endOfWeek.setDate(endOfWeek.getDate() + 7); // +7 pour avoir le dernier jour
     
       filteredAstreintes = filteredAstreintes.filter(a => {
         const aDate = new Date(a.Date * 1000);
@@ -473,10 +473,13 @@ const Component = () => {
             {dayAstreintes.length > 0 && (
               <div style={{ fontSize: '10px' }}>
                 {dayAstreintes.slice(0, 3).map((astreinte, index) => (
+				  // Déterminer si l'astreinte est validée
                   <div 
                     key={index} 
                     style={{ 
-                      background: isJourAstreinte(astreinte) ? '#dbeafe' : '#e0f2fe', 
+                      background: isJourAstreinte(astreinte) ? '#dbeafe' : '#e0f2fe',
+					  // Ajouter une bordure selon le statut validée ou non de l'astreintes
+                      border: astreinte.ValidationService === true ? '1px solid #10b981' : '1px solid #3b82f6',
                       color: isJourAstreinte(astreinte) ? '#1e40af' : '#0c4a6e', 
                       padding: '2px 4px', 
                       borderRadius: '3px', 
