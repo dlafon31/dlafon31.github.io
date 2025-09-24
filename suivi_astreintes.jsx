@@ -145,16 +145,20 @@ const Component = () => {
       });
     } else if (viewMode === 'semaine') {
       const startOfWeek = new Date(currentDate);
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+	  // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
+      const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
+      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+    
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(endOfWeek.getDate() + 6);
-      
+    
       filteredAstreintes = filteredAstreintes.filter(a => {
         const aDate = new Date(a.Date * 1000);
         return aDate >= startOfWeek && aDate <= endOfWeek;
       });
     }
-    
+  
     return filteredAstreintes;
   };
 
@@ -175,7 +179,11 @@ const Component = () => {
         return `du mois de ${currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
       case 'semaine':
         const startOfWeek = new Date(currentDate);
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+        // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
+        const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
+        const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+      
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(endOfWeek.getDate() + 6);
         return `de la semaine du ${startOfWeek.getDate()} au ${endOfWeek.getDate()} ${endOfWeek.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
@@ -380,7 +388,12 @@ const Component = () => {
     const month = currentDate.getMonth(); 
     const firstDay = new Date(year, month, 1); 
     const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
+    
+	// startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
+	// CORRECTION : Gérer correctement le cas où le premier jour du mois est un dimanche
+	const dayOfWeek = firstDay.getDay(); // 0 = dimanche, 1 = lundi, etc.
+	const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Si dimanche (0), reculer de 6 jours, sinon reculer de (dayOfWeek - 1) jours
+	startDate.setDate(startDate.getDate() - daysToSubtract);
     
     const days = []; 
     const currentDay = new Date(startDate); 
@@ -509,15 +522,20 @@ const Component = () => {
   };
 
   const renderWeekView = () => {
-    const startOfWeek = new Date(currentDate); 
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); 
+    const startOfWeek = new Date(currentDate);
+	
+    // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
+    const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Si dimanche (0), reculer de 6 jours, sinon reculer de (dayOfWeek - 1) jours
+    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+  
     const days = [];
-    
+  
     for (let i = 0; i < 7; i++) {
       const dayDate = new Date(startOfWeek); 
       dayDate.setDate(dayDate.getDate() + i); 
       const isToday = dayDate.toDateString() === new Date().toDateString(); 
-      const dayAstreintes = getFilteredAstreintes(getAstreintesForDate(dayDate));
+	  const dayAstreintes = getFilteredAstreintes(getAstreintesForDate(dayDate));
       
       const sortedAstreintes = dayAstreintes.sort((a, b) => {
         const serviceA = getServiceName(a.Service);
@@ -622,14 +640,18 @@ const Component = () => {
         return currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
       case 'semaine':
         const startOfWeek = new Date(currentDate); 
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); 
+        // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
+        const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
+        const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+      
         const endOfWeek = new Date(startOfWeek); 
         endOfWeek.setDate(endOfWeek.getDate() + 6);
         return `${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${endOfWeek.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
       default:
         return '';
-    }
-  };
+  }
+};
 
   if (loading) {
     return (
