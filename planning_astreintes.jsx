@@ -598,8 +598,8 @@ const Component = () => {
                     marginBottom: '8px', 
                     fontSize: '12px', 
                     position: 'relative',
-                    // Ajouter une bordure verte pour les astreintes validées
-                    border: isValidated ? '2px solid #10b981' : 'none',
+                    // Ajouter une bordure selon le statut validée ou non de l'astreintes
+                    border: isValidated ? '2px solid #10b981' : '2px solid #3b82f6',
                     // Réduire l'opacité pour les astreintes validées
                     opacity: isValidated ? 0.7 : 1
                   }}
@@ -625,8 +625,8 @@ const Component = () => {
                       top: '4px', 
                       right: '4px', 
                       // Changer la couleur et le style pour les astreintes validées
-                      background: isValidated ? '#d1d5db' : '#ef4444', 
-                      color: isValidated ? '#6b7280' : 'white', 
+                      background: isValidated ? '#d1d5db' : '#e3b1b1', 
+                      color: isValidated ? '#6b7280' : '#ef4444', 
                       border: 'none', 
                       borderRadius: '3px', 
                       padding: '2px 4px', 
