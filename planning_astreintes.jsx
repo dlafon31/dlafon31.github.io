@@ -16,7 +16,9 @@ const Component = () => {
     clinicienNuit: '', 
     date: '', 
     jour: false, 
-    nuit: false 
+    nuit: false,
+    jourValidated: false,
+    nuitValidated: false
   });
 
   useEffect(() => { loadData(); }, []);
@@ -216,14 +218,28 @@ const Component = () => {
 
   const loadExistingAstreintes = (date, serviceId) => {
     if (!serviceId || serviceId === 'tous') {
-      return { clinicienJour: '', clinicienNuit: '', jour: false, nuit: false };
+      return { 
+        clinicienJour: '', 
+        clinicienNuit: '', 
+        jour: false, 
+        nuit: false,
+        jourValidated: false,
+        nuitValidated: false
+      };
     }
     
     const servicesAutorises = getServicesAutorises();
     const serviceAutorise = servicesAutorises.find(s => s.id === parseInt(serviceId));
     
     if (!serviceAutorise) {
-      return { clinicienJour: '', clinicienNuit: '', jour: false, nuit: false };
+      return { 
+        clinicienJour: '', 
+        clinicienNuit: '', 
+        jour: false, 
+        nuit: false,
+        jourValidated: false,
+        nuitValidated: false
+      };
     }
     
     const dayAstreintes = getAstreintesForDate(date);
@@ -236,7 +252,9 @@ const Component = () => {
       clinicienJour: jourAstreinte ? jourAstreinte.Clinicien.toString() : '',
       clinicienNuit: nuitAstreinte ? nuitAstreinte.Clinicien.toString() : '',
       jour: !!jourAstreinte,
-      nuit: !!nuitAstreinte
+      nuit: !!nuitAstreinte,
+      jourValidated: jourAstreinte ? jourAstreinte.ValidationService === true : false,
+      nuitValidated: nuitAstreinte ? nuitAstreinte.ValidationService === true : false
     };
   };
 
@@ -315,7 +333,7 @@ const Component = () => {
       }
 
       setShowAddModal(false);
-      setFormData({ service: '', clinicienJour: '', clinicienNuit: '', date: '', jour: false, nuit: false });
+      setFormData({ service: '', clinicienJour: '', clinicienNuit: '', date: '', jour: false, nuit: false, jourValidated: false, nuitValidated: false });
       await loadData();
     } catch (error) {
       alert('Erreur lors de la sauvegarde: ' + error.message);
@@ -566,45 +584,68 @@ const Component = () => {
             >
               {isResponsable() ? '✏️ Gérer astreinte' : '👁️ Consulter astreinte'}
             </button>
-            {sortedAstreintes.map((astreinte, index) => (
-              <div 
-                key={index} 
-                style={{ 
-                  background: isJourAstreinte(astreinte) ? '#dbeafe' : '#e0f2fe', 
-                  padding: '8px', 
-                  borderRadius: '6px', 
-                  marginBottom: '8px', 
-                  fontSize: '12px', 
-                  position: 'relative' 
-                }}
-              >
-                <div style={{ fontWeight: '500', marginBottom: '4px' }}>
-                  {isJourAstreinte(astreinte) ? '☀️' : '🌙'} {getServiceName(astreinte.Service)}
-                </div>
-                <div style={{ color: '#6b7280', marginBottom: '4px' }}>
-                  {getClinicienName(astreinte.Clinicien)}
-                </div>
-                <button 
-                  onClick={() => handleDeleteAstreinte(astreinte)} 
+            {sortedAstreintes.map((astreinte, index) => {
+              // Déterminer si l'astreinte est validée
+              const isValidated = astreinte.ValidationService === true;
+              
+              return (
+                <div 
+                  key={index} 
                   style={{ 
-                    position: 'absolute', 
-                    top: '4px', 
-                    right: '4px', 
-                    background: '#ef4444', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: '3px', 
-                    padding: '2px 4px', 
-                    fontSize: '10px', 
-                    cursor: isResponsable() ? 'pointer' : 'default',
-                    opacity: isResponsable() ? 1 : 0.3,
-                    display: isResponsable() ? 'block' : 'none'
+                    background: isJourAstreinte(astreinte) ? '#dbeafe' : '#e0f2fe', 
+                    padding: '8px', 
+                    borderRadius: '6px', 
+                    marginBottom: '8px', 
+                    fontSize: '12px', 
+                    position: 'relative',
+                    // Ajouter une bordure verte pour les astreintes validées
+                    border: isValidated ? '2px solid #10b981' : 'none',
+                    // Réduire l'opacité pour les astreintes validées
+                    opacity: isValidated ? 0.7 : 1
                   }}
                 >
-                  ❌
-                </button>
-              </div>
-            ))}
+                  <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                    {isJourAstreinte(astreinte) ? '☀️' : '🌙'} {getServiceName(astreinte.Service)}
+                  </div>
+                  <div style={{ color: '#6b7280', marginBottom: '4px' }}>
+                    {getClinicienName(astreinte.Clinicien)}
+                  </div>
+                  {/* Modifier le bouton de suppression pour les astreintes validées */}
+                  <button 
+                    onClick={() => {
+                      // Empêcher la suppression si l'astreinte est validée
+                      if (isValidated) {
+                        alert('Impossible de supprimer une astreinte validée');
+                        return;
+                      }
+                      handleDeleteAstreinte(astreinte);
+                    }} 
+                    style={{ 
+                      position: 'absolute', 
+                      top: '4px', 
+                      right: '4px', 
+                      // Changer la couleur et le style pour les astreintes validées
+                      background: isValidated ? '#d1d5db' : '#ef4444', 
+                      color: isValidated ? '#6b7280' : 'white', 
+                      border: 'none', 
+                      borderRadius: '3px', 
+                      padding: '2px 4px', 
+                      fontSize: '10px', 
+                      // Désactiver le curseur pour les astreintes validées
+                      cursor: isValidated ? 'not-allowed' : (isResponsable() ? 'pointer' : 'default'),
+                      // Ajuster l'opacité selon le statut
+                      opacity: isValidated ? 0.5 : (isResponsable() ? 1 : 0.3),
+                      display: isResponsable() ? 'block' : 'none'
+                    }}
+                    // Ajouter un title pour expliquer pourquoi le bouton est désactivé
+                    title={isValidated ? 'Impossible de supprimer une astreinte validée' : 'Supprimer cette astreinte'}
+                  >
+                    {/* Changer l'icône pour les astreintes validées */}
+                    {isValidated ? '🔒' : '❌'}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       );
@@ -839,24 +880,42 @@ const Component = () => {
                     type="checkbox"
                     checked={formData.jour}
                     onChange={(e) => setFormData({...formData, jour: e.target.checked})}
-                    disabled={!isResponsable()}
-                    style={{ marginRight: '8px' }}
+                    disabled={!isResponsable() || formData.jourValidated}
+                    style={{ 
+                      marginRight: '8px',
+                      opacity: formData.jourValidated ? 0.5 : 1
+                    }}
                   />
-                  <span style={{ fontWeight: '500' }}>☀️ Astreinte de jour</span>
+                  <span style={{ 
+                    fontWeight: '500',
+                    color: formData.jourValidated ? '#6b7280' : 'inherit'
+                  }}>
+                    ☀️ Astreinte de jour
+                    {formData.jourValidated && (
+                      <span style={{ 
+                        color: '#10b981', 
+                        marginLeft: '5px',
+                        fontSize: '12px'
+                      }}>
+                        ✓ Validée
+                      </span>
+                    )}
+                  </span>
                 </label>
                 {formData.jour && (
                   <select
                     value={formData.clinicienJour}
                     onChange={(e) => setFormData({...formData, clinicienJour: e.target.value})}
-                    disabled={!isResponsable()}
+                    disabled={!isResponsable() || formData.jourValidated}
                     style={{
                       width: '100%',
                       padding: '8px 12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '6px',
                       fontSize: '14px',
-                      backgroundColor: !isResponsable() ? '#f9fafb' : 'white',
-                      cursor: isResponsable() ? 'pointer' : 'default'
+                      backgroundColor: (!isResponsable() || formData.jourValidated) ? '#f9fafb' : 'white',
+                      cursor: (!isResponsable() || formData.jourValidated) ? 'default' : 'pointer',
+                      opacity: formData.jourValidated ? 0.7 : 1
                     }}
                   >
                     <option value="">Sélectionner un clinicien</option>
@@ -866,6 +925,19 @@ const Component = () => {
                       </option>
                     ))}
                   </select>
+                )}
+                {formData.jourValidated && (
+                  <div style={{
+                    marginTop: '5px',
+                    padding: '8px',
+                    backgroundColor: '#d1fae5',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    color: '#059669',
+                    border: '1px solid #10b981'
+                  }}>
+                    🔒 astreinte non modifiable
+                  </div>
                 )}
               </div>
 
@@ -875,24 +947,42 @@ const Component = () => {
                     type="checkbox"
                     checked={formData.nuit}
                     onChange={(e) => setFormData({...formData, nuit: e.target.checked})}
-                    disabled={!isResponsable()}
-                    style={{ marginRight: '8px' }}
+                    disabled={!isResponsable() || formData.nuitValidated}
+                    style={{ 
+                      marginRight: '8px',
+                      opacity: formData.nuitValidated ? 0.5 : 1
+                    }}
                   />
-                  <span style={{ fontWeight: '500' }}>🌙 Astreinte de nuit</span>
+                  <span style={{ 
+                    fontWeight: '500',
+                    color: formData.nuitValidated ? '#6b7280' : 'inherit'
+                  }}>
+                    🌙 Astreinte de nuit
+                    {formData.nuitValidated && (
+                      <span style={{ 
+                        color: '#10b981', 
+                        marginLeft: '5px',
+                        fontSize: '12px'
+                      }}>
+                        ✓ Validée
+                      </span>
+                    )}
+                  </span>
                 </label>
                 {formData.nuit && (
                   <select
                     value={formData.clinicienNuit}
                     onChange={(e) => setFormData({...formData, clinicienNuit: e.target.value})}
-                    disabled={!isResponsable()}
+                    disabled={!isResponsable() || formData.nuitValidated}
                     style={{
                       width: '100%',
                       padding: '8px 12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '6px',
                       fontSize: '14px',
-                      backgroundColor: !isResponsable() ? '#f9fafb' : 'white',
-                      cursor: isResponsable() ? 'pointer' : 'default'
+                      backgroundColor: (!isResponsable() || formData.nuitValidated) ? '#f9fafb' : 'white',
+                      cursor: (!isResponsable() || formData.nuitValidated) ? 'default' : 'pointer',
+                      opacity: formData.nuitValidated ? 0.7 : 1
                     }}
                   >
                     <option value="">Sélectionner un clinicien</option>
@@ -903,6 +993,19 @@ const Component = () => {
                     ))}
                   </select>
                 )}
+                {formData.nuitValidated && (
+                  <div style={{
+                    marginTop: '5px',
+                    padding: '8px',
+                    backgroundColor: '#d1fae5',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    color: '#059669',
+                    border: '1px solid #10b981'
+                  }}>
+                    🔒 astreinte non modifiable
+                  </div>
+                )}
               </div>
             </div>
 
@@ -910,7 +1013,7 @@ const Component = () => {
               <button
                 onClick={() => {
                   setShowAddModal(false);
-                  setFormData({ service: '', clinicienJour: '', clinicienNuit: '', date: '', jour: false, nuit: false });
+                  setFormData({ service: '', clinicienJour: '', clinicienNuit: '', date: '', jour: false, nuit: false, jourValidated: false, nuitValidated: false });
                 }}
                 style={{
                   background: '#6b7280',
@@ -970,6 +1073,17 @@ const Component = () => {
               borderRadius: '3px'
             }}></div>
             <span style={{ fontSize: '14px' }}>🌙 Astreinte de nuit</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '16px',
+              height: '16px',
+              background: '#dbeafe',
+              borderRadius: '3px',
+              border: '2px solid #10b981'
+            }}></div>
+            <span style={{ fontSize: '14px' }}>✓ Astreinte validée</span>
           </div>
         </div>
       </div>
