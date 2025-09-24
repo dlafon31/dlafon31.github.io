@@ -18,19 +18,6 @@ const Component = () => {
 
   useEffect(() => { loadData(); }, []);
 
-  // Ajouter un useEffect pour initialiser automatiquement le service clinique
-  // si un seul service est disponible
-  useEffect(() => {
-    if (services.length > 0 && utilisateurs.length > 0) {
-      const servicesCliniques = getServicesCliniques();
-    
-      // Si il n'y a qu'un seul service clinique disponible et qu'aucun n'est encore sélectionné
-      if (servicesCliniques.length === 1 && selectedServiceClinique === 'tous') {
-        setSelectedServiceClinique(servicesCliniques[0]);
-      }
-    }
-  }, [services, utilisateurs]); // Se déclenche quand les données sont chargées
-
   const loadData = async () => {
     try {
       setLoading(true);
@@ -44,6 +31,29 @@ const Component = () => {
       setServices(Array.isArray(servicesData) ? servicesData : []);
       setPersonnels(Array.isArray(personnelsData) ? personnelsData : []);
       setUtilisateurs(Array.isArray(utilisateursData) ? utilisateursData : []);
+	 
+      // AUTO-SÉLECTION : Si un seul service clinique est disponible
+      // Calculer les services cliniques disponibles après mise à jour des données
+      if (Array.isArray(servicesData) && Array.isArray(utilisateursData) && utilisateursData.length > 0) {
+        const premierUtilisateur = utilisateursData[0];
+        let servicesAutorises = servicesData;
+      
+        if (premierUtilisateur.ServiceClinique && premierUtilisateur.ServiceClinique.trim() !== '') {
+          const serviceCliniqueRecherche = premierUtilisateur.ServiceClinique.trim();
+          servicesAutorises = servicesData.filter(service => service.gristHelper_Display2 === serviceCliniqueRecherche);
+        }
+      
+        const servicesCliniques = servicesAutorises
+          .filter(service => service.gristHelper_Display2)
+          .map(service => service.gristHelper_Display2)
+          .filter((value, index, array) => array.indexOf(value) === index);
+      
+        // Si un seul service clinique disponible, le sélectionner automatiquement
+        if (servicesCliniques.length === 1) {
+          setSelectedServiceClinique(servicesCliniques[0]);
+        }
+      }
+	  
     } catch (error) {
       console.error('Erreur chargement données:', error);
       setAstreintes([]);
