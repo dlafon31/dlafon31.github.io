@@ -770,7 +770,7 @@ const Component = () => {
                 fontWeight: '500',
                 display: 'flex',
                 alignItems: 'center',
-                height: '40px',
+                height: '34px',
                 whiteSpace: 'nowrap',
                 opacity: (isResponsable() && isMonthPast(currentDate.getFullYear(), currentDate.getMonth()) && hasUnvalidatedAstreintes(currentDate.getFullYear(), currentDate.getMonth())) 
                   ? 1 
