@@ -18,6 +18,19 @@ const Component = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // Ajouter un useEffect pour initialiser automatiquement le service clinique
+  // si un seul service est disponible
+  useEffect(() => {
+    if (services.length > 0 && utilisateurs.length > 0) {
+      const servicesCliniques = getServicesCliniques();
+    
+      // Si il n'y a qu'un seul service clinique disponible et qu'aucun n'est encore sélectionné
+      if (servicesCliniques.length === 1 && selectedServiceClinique === 'tous') {
+        setSelectedServiceClinique(servicesCliniques[0]);
+      }
+    }
+  }, [services, utilisateurs]); // Se déclenche quand les données sont chargées
+
   const loadData = async () => {
     try {
       setLoading(true);
