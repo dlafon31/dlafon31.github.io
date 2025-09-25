@@ -260,10 +260,10 @@ const Component = () => {
           justifyContent: 'center', 
           gap: '2px' 
         }}>
-          💰 Gestion des Paiements des Astreintes
+          💰 Gestion du paiement
         </h1>
         <p style={{ fontSize: '1rem', margin: '0', opacity: '0.9' }}>
-          Mise en paiement et suivi des rémunérations d'astreintes
+          Mise en paiement des astreintes
         </p>
       </div>
 

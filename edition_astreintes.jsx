@@ -535,10 +535,10 @@ const Component = () => {
           justifyContent: 'center', 
           gap: '2px' 
         }}>
-          📄 Edition des paiements
+          📄 Edition du paiement
         </h1>
         <p style={{ fontSize: '1rem', opacity: '0.9', margin: '0' }}>
-          Édition et génération des états de paiement des astreintes
+          Générer les états de paiement des astreintes
         </p>
       </div>
 
@@ -734,7 +734,7 @@ const Component = () => {
           {/* Bouton d'édition */}
           <div style={{
             background: 'white',
-            padding: '25px',
+            padding: '2px',
             borderRadius: '12px',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
             textAlign: 'center'
@@ -750,7 +750,7 @@ const Component = () => {
                   ? '#9ca3af' 
                   : 'white',
                 border: 'none',
-                padding: '15px 30px',
+                padding: '8px 10px',
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: '600',
@@ -760,7 +760,7 @@ const Component = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '10px',
+                gap: '5px',
                 minWidth: '280px',
                 margin: '0 auto',
                 transition: 'all 0.2s ease'
@@ -784,7 +784,7 @@ const Component = () => {
             
             {selectedEtats.size === 0 && (
               <div style={{
-                marginTop: '15px',
+                marginTop: '4px',
                 color: '#6b7280',
                 fontSize: '14px',
                 fontStyle: 'italic'
@@ -795,8 +795,8 @@ const Component = () => {
             
             {selectedEtats.size > 0 && (
               <div style={{
-                marginTop: '15px',
-                padding: '12px',
+                marginTop: '4px',
+                // padding: '2px',
                 background: '#f0f9ff',
                 borderRadius: '6px',
                 fontSize: '14px',
@@ -818,12 +818,12 @@ const Component = () => {
       }}>
         <div style={{
           background: 'white',
-          padding: '20px',
+          padding: '2px',
           borderRadius: '8px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '32px', color: '#8b5cf6', fontWeight: 'bold', marginBottom: '5px' }}>
+          <div style={{ fontSize: '24px', color: '#8b5cf6', fontWeight: 'bold', marginBottom: '2px' }}>
             {etats.length}
           </div>
           <div style={{ color: '#6b7280' }}>Total états</div>
@@ -831,12 +831,12 @@ const Component = () => {
 
         <div style={{
           background: 'white',
-          padding: '20px',
+          padding: '2px',
           borderRadius: '8px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '32px', color: '#10b981', fontWeight: 'bold', marginBottom: '5px' }}>
+          <div style={{ fontSize: '24px', color: '#10b981', fontWeight: 'bold', marginBottom: '2px' }}>
             {etats.filter(e => e.Date_Edition).length}
           </div>
           <div style={{ color: '#6b7280' }}>États édités</div>
@@ -844,30 +844,32 @@ const Component = () => {
 
         <div style={{
           background: 'white',
-          padding: '20px',
+          padding: '2px',
           borderRadius: '8px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '32px', color: '#f59e0b', fontWeight: 'bold', marginBottom: '5px' }}>
+          <div style={{ fontSize: '24px', color: '#f59e0b', fontWeight: 'bold', marginBottom: '2px' }}>
             {etats.filter(e => !e.Date_Edition).length}
           </div>
-          <div style={{ color: '#6b7280' }}>Non édités</div>
+          <div style={{ color: '#6b7280' }}>États non édités</div>
         </div>
 
         <div style={{
           background: 'white',
-          padding: '20px',
+          padding: '2px',
           borderRadius: '8px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '32px', color: '#ef4444', fontWeight: 'bold', marginBottom: '5px' }}>
+          <div style={{ fontSize: '20px', color: '#ef4444', fontWeight: 'bold', marginBottom: '2px' }}>
             {astreintesPayees.length}
           </div>
           <div style={{ color: '#6b7280' }}>Astreintes payées</div>
         </div>
+		
       </div>
+
 
       {/* Guide d'utilisation */}
       <div style={{
