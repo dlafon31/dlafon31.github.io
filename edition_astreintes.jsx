@@ -134,6 +134,10 @@ const Component = () => {
         display: none !important;
       }
       
+      .instructions {
+        display: none !important;
+      }
+      
       .header-table {
         width: 100%;
         border-collapse: collapse;
@@ -579,10 +583,10 @@ const Component = () => {
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             marginBottom: '20px'
           }}>
-
-			<h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
-			  📅 Sélection du mois
-			</h2>          
+            <h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
+              📅 Filtre par période
+            </h2>
+            
             <div style={{ display: 'flex', gap: '12px', alignItems: 'end', flexWrap: 'wrap' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
@@ -638,21 +642,20 @@ const Component = () => {
                   })}
                 </select>
               </div>
-			  
-			  {selectedMonth && selectedYear && (
-			    <div style={{
-				  background: '#f3f4f6',
-				  padding: '8px 15px',
-				  borderRadius: '6px',
-				  fontWeight: '500',
-				  color: '#1f2937',
-				  fontSize: '14px',
-				  whiteSpace: 'nowrap'
-			    }}>
-				  {getMonthName(selectedMonth)} {selectedYear}
-			    </div>
-			  )}
 
+              {selectedMonth && selectedYear && (
+                <div style={{
+                  background: '#f3f4f6',
+                  padding: '8px 15px',
+                  borderRadius: '6px',
+                  fontWeight: '500',
+                  color: '#1f2937',
+                  fontSize: '14px',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {getMonthName(selectedMonth)} {selectedYear} ({filteredEtats.length} état{filteredEtats.length > 1 ? 's' : ''})
+                </div>
+              )}
             </div>
           </div>
 
@@ -866,7 +869,6 @@ const Component = () => {
                   <span>🖨️</span>
                   <span>
                     Éditer pour impression
-                    {selectedEtat && ` - ${selectedEtat.Nom.substring(0, 30)}...`}
                   </span>
                 </>
               )}
