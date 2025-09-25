@@ -115,7 +115,7 @@ const Component = () => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${etat.Nom}</title>
+  <title>${etat.Nom_Fichier || etat.Nom}</title>
   <style>
     /* Styles pour l'impression/PDF */
     @media print {
@@ -476,11 +476,11 @@ const Component = () => {
       return;
     }
 
-    const message = `Confirmer l'édition de l'état de paiement "${selectedEtat.Nom}" ?`;
+    // const message = `Confirmer l'édition de l'état de paiement "${selectedEtat.Nom}" ?`;
     
-    if (!confirm(message)) {
-      return;
-    }
+    // if (!confirm(message)) {
+    //   return;
+    // }
 
     setProcessing(true);
 
