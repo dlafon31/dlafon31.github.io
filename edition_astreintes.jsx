@@ -584,80 +584,80 @@ const Component = () => {
             marginBottom: '20px'
           }}>
             <h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
-              📅 Filtre par période
+              📅 Sélection du mois
             </h2>
             
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'end', flexWrap: 'wrap' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
-                  Mois
-                </label>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    minWidth: '140px'
-                  }}
-                >
-                  <option value="">Tous les mois</option>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const month = String(i + 1).padStart(2, '0');
-                    const monthName = new Date(2000, i, 1).toLocaleDateString('fr-FR', { month: 'long' });
-                    return (
-                      <option key={month} value={month}>
-                        {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
-                  Année
-                </label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    minWidth: '100px'
-                  }}
-                >
-                  <option value="">Toutes les années</option>
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const year = new Date().getFullYear() - 2 + i;
-                    return (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              {selectedMonth && selectedYear && (
-                <div style={{
-                  background: '#f3f4f6',
-                  padding: '8px 15px',
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'end', flexWrap: 'wrap' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
+                Mois
+              </label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
                   borderRadius: '6px',
-                  fontWeight: '500',
-                  color: '#1f2937',
                   fontSize: '14px',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {getMonthName(selectedMonth)} {selectedYear} ({filteredEtats.length} état{filteredEtats.length > 1 ? 's' : ''})
-                </div>
-              )}
+                  minWidth: '140px'
+                }}
+              >
+                <option value="">Sélectionner</option>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const month = String(i + 1).padStart(2, '0');
+                  const monthName = new Date(2000, i, 1).toLocaleDateString('fr-FR', { month: 'long' });
+                  return (
+                    <option key={month} value={month}>
+                      {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
+                Année
+              </label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  minWidth: '100px'
+                }}
+              >
+                <option value="">Sélectionner</option>
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = new Date().getFullYear() - 2 + i;
+                  return (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {selectedMonth && selectedYear && (
+              <div style={{
+                background: '#f3f4f6',
+                padding: '8px 15px',
+                borderRadius: '6px',
+                fontWeight: '500',
+                color: '#1f2937',
+                fontSize: '14px',
+                whiteSpace: 'nowrap'
+              }}>
+                {getMonthName(selectedMonth)} {selectedYear}
+              </div>
+            )}
           </div>
+        </div>
 
           {/* Tableau des états */}
           <div style={{
@@ -665,20 +665,15 @@ const Component = () => {
             borderRadius: '12px',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
             overflow: 'hidden',
-            marginBottom: '30px'
+            marginBottom: '10px'
           }}>
             <div style={{
               background: '#f8fafc',
-              padding: '20px',
+              padding: '10px',
               borderBottom: '1px solid #e2e8f0'
             }}>
               <h2 style={{ margin: '0', color: '#1f2937', fontSize: '20px' }}>
-                États de paiement des astreintes ({filteredEtats.length} état{filteredEtats.length > 1 ? 's' : ''})
-                {selectedMonth && selectedYear && (
-                  <span style={{ color: '#6b7280', fontSize: '16px', fontWeight: 'normal' }}>
-                    {' '}- {getMonthName(selectedMonth)} {selectedYear}
-                  </span>
-                )}
+                États de paiement des astreintes 
               </h2>
             </div>
 
