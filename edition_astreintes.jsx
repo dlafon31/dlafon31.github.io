@@ -376,10 +376,49 @@ const Component = () => {
   </style>
 </head>
 <body>
-  <div class="container">
-    <button class="print-button" onclick="window.print()">
-      🖨️ Imprimer / Sauvegarder en PDF
-    </button>
+	<div style="display: flex; gap: 15px; align-items: flex-start; justify-content: space-between; margin-bottom: 30px;">
+	  <button class="print-button" onclick="window.print()" style="
+		background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+		color: white;
+		border: none;
+		padding: 15px 30px;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 16px;
+		font-weight: 600;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		transition: all 0.2s ease;
+		height: 54px;
+		flex-shrink: 0;
+	  " onmouseover="this.style.background='linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 12px rgba(0, 0, 0, 0.15)';" onmouseout="this.style.background='linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+		🖨️ Imprimer / Sauvegarder en PDF
+	  </button>
+	  
+	  <button onclick="window.close()" style="
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+		color: white;
+		border: none;
+		padding: 15px 30px;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 16px;
+		font-weight: 600;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		transition: all 0.2s ease;
+		height: 54px;
+		flex-shrink: 0;
+	  " onmouseover="this.style.background='linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 12px rgba(0, 0, 0, 0.15)';" onmouseout="this.style.background='linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+		❌ Fermer la pop-up
+	  </button>
+	</div>
     
     <div class="instructions">
       <h3>💡 Instructions</h3>
