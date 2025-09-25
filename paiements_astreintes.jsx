@@ -242,27 +242,27 @@ const Component = () => {
   }
 
   return (
-    <div style={{ padding: '15px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '2px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* En-tête compacte */}
       <div style={{
         background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
         color: 'white',
-        padding: '15px',
-        borderRadius: '8px',
+        padding: '2px',
+        borderRadius: '12px',
         textAlign: 'center',
-        marginBottom: '20px'
+        marginBottom: '10px'
       }}>
         <h1 style={{ 
-          fontSize: '1.3rem', 
-          margin: '0 0 5px 0', 
+          fontSize: '1.5rem', 
+          marginBottom: '1px', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          gap: '8px' 
+          gap: '2px' 
         }}>
           💰 Gestion des Paiements des Astreintes
         </h1>
-        <p style={{ fontSize: '0.9rem', margin: '0', opacity: '0.9' }}>
+        <p style={{ fontSize: '1rem', margin: '0', opacity: '0.9' }}>
           Mise en paiement et suivi des rémunérations d'astreintes
         </p>
       </div>
