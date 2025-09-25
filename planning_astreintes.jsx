@@ -3,6 +3,9 @@ const Component = () => {
   const [services, setServices] = useState([]);
   const [personnels, setPersonnels] = useState([]);
   const [utilisateurs, setUtilisateurs] = useState([]);
+  const [joursSemaine, setJoursSemaine] = useState([]); // AJOUT
+  const [joursFeries, setJoursFeries] = useState([]); // AJOUT
+  const [servicesCliniques, setServicesCliniques] = useState([]); // AJOUT
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('mois');
@@ -26,25 +29,152 @@ const Component = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [astreintesData, servicesData, personnelsData, utilisateursData] = await Promise.all([
+      const [
+        astreintesData, 
+        servicesData, 
+        personnelsData, 
+        utilisateursData,
+        joursSemaineData, // AJOUT
+        joursSeriesData, // AJOUT
+        servicesCliniquesData // AJOUT
+      ] = await Promise.all([
         gristAPI.getData('Astreintes'), 
         gristAPI.getData('Services'), 
         gristAPI.getData('Personnels'),
-        gristAPI.getData('Utilisateurs')
+        gristAPI.getData('Utilisateurs'),
+        gristAPI.getData('JoursSemaine'), // AJOUT
+        gristAPI.getData('JoursFeries'), // AJOUT
+        gristAPI.getData('ServicesCliniques') // AJOUT
       ]);
+      
       setAstreintes(Array.isArray(astreintesData) ? astreintesData : []);
       setServices(Array.isArray(servicesData) ? servicesData : []);
       setPersonnels(Array.isArray(personnelsData) ? personnelsData : []);
       setUtilisateurs(Array.isArray(utilisateursData) ? utilisateursData : []);
+      setJoursSemaine(Array.isArray(joursSemaineData) ? joursSemaineData : []); // AJOUT
+      setJoursFeries(Array.isArray(joursSeriesData) ? joursSeriesData : []); // AJOUT
+      setServicesCliniques(Array.isArray(servicesCliniquesData) ? servicesCliniquesData : []); // AJOUT
+
+      // AUTO-SÉLECTION : Si un seul service clinique est disponible
+      // Calculer les services cliniques disponibles après mise à jour des données
+      if (Array.isArray(servicesData) && Array.isArray(utilisateursData) && utilisateursData.length > 0) {
+        const premierUtilisateur = utilisateursData[0];
+        let servicesAutorises = servicesData;
+      
+        if (premierUtilisateur.ServiceClinique && premierUtilisateur.ServiceClinique.trim() !== '') {
+          const serviceCliniqueRecherche = premierUtilisateur.ServiceClinique.trim();
+          servicesAutorises = servicesData.filter(service => service.gristHelper_Display2 === serviceCliniqueRecherche);
+        }
+      
+        const servicesCliniques = servicesAutorises
+          .filter(service => service.gristHelper_Display2)
+          .map(service => service.gristHelper_Display2)
+          .filter((value, index, array) => array.indexOf(value) === index);
+      
+        // Si un seul service clinique disponible, le sélectionner automatiquement
+        if (servicesCliniques.length === 1) {
+          setSelectedServiceClinique(servicesCliniques[0]);
+        }
+      }
+
     } catch (error) {
       console.error('Erreur chargement données:', error);
       setAstreintes([]);
       setServices([]);
       setPersonnels([]);
       setUtilisateurs([]);
+      setJoursSemaine([]); // AJOUT
+      setJoursFeries([]); // AJOUT
+      setServicesCliniques([]); // AJOUT
     } finally { 
       setLoading(false); 
     }
+  };
+
+  // AJOUT : Fonction pour vérifier si une date est un jour férié
+  const isJourFerie = (date) => {
+    if (!date || !joursFeries || joursFeries.length === 0) return false;
+    
+    const targetYear = date.getFullYear();
+    const targetMonth = date.getMonth();
+    const targetDay = date.getDate();
+    
+    return joursFeries.some(jf => {
+      const jfDate = new Date(jf.JourFerie * 1000);
+      return jfDate.getFullYear() === targetYear && 
+             jfDate.getMonth() === targetMonth && 
+             jfDate.getDate() === targetDay;
+    });
+  };
+
+  // AJOUT : Fonction pour obtenir le type de jour de la semaine
+  const getTypeJourSemaine = (date) => {
+    const dayOfWeek = date.getDay(); // 0 = dimanche, 1 = lundi, etc.
+    const rang = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convertir en rang (0 = lundi, 6 = dimanche)
+    const jourSemaine = joursSemaine.find(js => js.Rang === rang);
+    return jourSemaine ? jourSemaine.Type : null;
+  };
+
+  // AJOUT : Fonction pour obtenir le nom du jour de la semaine
+  const getNomJourSemaine = (date) => {
+    const dayOfWeek = date.getDay(); // 0 = dimanche, 1 = lundi, etc.
+    const rang = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convertir en rang (0 = lundi, 6 = dimanche)
+    const jourSemaine = joursSemaine.find(js => js.Rang === rang);
+    return jourSemaine ? jourSemaine.Jour : null;
+  };
+
+  // AJOUT : Fonction pour vérifier si le samedi est ouvert pour un service clinique
+  const isSamediOuvertPourService = (serviceId) => {
+    if (!serviceId) return false;
+    
+    const service = services.find(s => s.id === parseInt(serviceId));
+    if (!service || !service.gristHelper_Display2) return false;
+    
+    const serviceClinique = servicesCliniques.find(sc => sc.NomService === service.gristHelper_Display2);
+    return serviceClinique && serviceClinique.Samedi === 'Ouvert';
+  };
+
+  // AJOUT : Fonction pour vérifier si l'astreinte de jour doit être désactivée
+  const shouldDisableJourAstreinte = (date, serviceId) => {
+    if (!date) return false;
+    
+    const typeJour = getTypeJourSemaine(date);
+    const nomJour = getNomJourSemaine(date);
+    const estJourFerie = isJourFerie(date);
+    
+    // Règle 1: Jour ouvert + non férié → Pas d'astreinte de jour
+    if (typeJour === 'Ouvert' && !estJourFerie) {
+      return true;
+    }
+    
+    // Règle 2: Samedi + Service clinique "Samedi=Ouvert" → Pas d'astreinte de jour
+    if (nomJour === 'Samedi' && isSamediOuvertPourService(serviceId)) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // AJOUT : Fonction pour obtenir le message d'explication de la désactivation
+  const getDisabledJourMessage = (date, serviceId) => {
+    if (!date) return '';
+    
+    const typeJour = getTypeJourSemaine(date);
+    const nomJour = getNomJourSemaine(date);
+    const estJourFerie = isJourFerie(date);
+    
+    // Règle 1: Jour ouvert + non férié
+    if (typeJour === 'Ouvert' && !estJourFerie) {
+      return `Les astreintes de jour ne sont pas autorisées les ${nomJour.toLowerCase()}s (jour ouvert)`;
+    }
+    
+    // Règle 2: Samedi + Service clinique "Samedi=Ouvert"
+    if (nomJour === 'Samedi' && isSamediOuvertPourService(serviceId)) {
+      const service = services.find(s => s.id === parseInt(serviceId));
+      return `Les astreintes de jour ne sont pas autorisées le samedi pour le service ${service ? service.gristHelper_Display2 : ''} (service ouvert)`;
+    }
+    
+    return '';
   };
 
   const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR');
@@ -544,7 +674,7 @@ const Component = () => {
   };
 
   const renderWeekView = () => {
-    const startOfWeek = new Date(currentDate); 
+    const startOfWeek = new Date(currentDate);
 
     // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
     const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
@@ -898,6 +1028,25 @@ const Component = () => {
               </select>
             </div>
 
+            {/* AJOUT : Message d'information sur les règles de jour */}
+            {formData.service && shouldDisableJourAstreinte(selectedDate, formData.service) && (
+              <div style={{
+                background: '#fef3c7',
+                border: '1px solid #f59e0b',
+                borderRadius: '6px',
+                padding: '12px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ color: '#d97706', marginRight: '8px' }}>⚠️</span>
+                  <span style={{ fontWeight: '500', color: '#92400e' }}>Information importante</span>
+                </div>
+                <div style={{ color: '#92400e', fontSize: '14px' }}>
+                  {getDisabledJourMessage(selectedDate, formData.service)}
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
@@ -905,15 +1054,19 @@ const Component = () => {
                     type="checkbox"
                     checked={formData.jour}
                     onChange={(e) => setFormData({...formData, jour: e.target.checked})}
-                    disabled={!isResponsable() || formData.jourValidated}
+                    disabled={
+                      !isResponsable() || 
+                      formData.jourValidated || 
+                      shouldDisableJourAstreinte(selectedDate, formData.service)
+                    }
                     style={{ 
                       marginRight: '8px',
-                      opacity: formData.jourValidated ? 0.5 : 1
+                      opacity: (formData.jourValidated || shouldDisableJourAstreinte(selectedDate, formData.service)) ? 0.5 : 1
                     }}
                   />
                   <span style={{ 
                     fontWeight: '500',
-                    color: formData.jourValidated ? '#6b7280' : 'inherit'
+                    color: (formData.jourValidated || shouldDisableJourAstreinte(selectedDate, formData.service)) ? '#6b7280' : 'inherit'
                   }}>
                     ☀️ Astreinte de jour
                     {formData.jourValidated && (
