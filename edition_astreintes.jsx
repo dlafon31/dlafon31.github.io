@@ -606,7 +606,7 @@ const Component = () => {
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Support</th>
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Gestionnaire</th>
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Date édition</th>
-                    <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Commentaire</th>
+                    <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Nbr d'astreintes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -633,17 +633,8 @@ const Component = () => {
                       <td style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
                         {formatDate(etat.Date_EtatPaiement)}
                       </td>
-                      <td style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0' }}>
-                        <span style={{
-                          background: etat.Support === 'ENVT' ? '#f3e8ff' : '#fef2f2',
-                          color: etat.Support === 'ENVT' ? '#9333ea' : '#dc2626',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: '500'
-                        }}>
-                          {etat.Support}
-                        </span>
+                      <td style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
+                        {etat.Support}
                       </td>
                       <td style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', color: '#374151' }}>
                         {etat.Gestionnaire}
@@ -669,13 +660,11 @@ const Component = () => {
                       <td style={{
                         padding: '15px 20px',
                         borderBottom: '1px solid #e2e8f0',
-                        color: '#64748b',
-                        maxWidth: '200px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        color: '#374151',
+                        textAlign: 'center',
+                        fontWeight: '500'
                       }}>
-                        {etat.Commentaire || '-'}
+                        {etat.Nbr_Astreintes || 0}
                       </td>
                     </tr>
                   ))}
@@ -809,7 +798,7 @@ const Component = () => {
         </>
       )}
 
-      {/* Statistiques */}
+      {/* Statistiques - SUPPRESSION de la statistique "Astreintes payées" */}
       <div style={{
         marginTop: '30px',
         display: 'grid',
@@ -854,20 +843,6 @@ const Component = () => {
           </div>
           <div style={{ color: '#6b7280' }}>États non édités</div>
         </div>
-
-        <div style={{
-          background: 'white',
-          padding: '2px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '20px', color: '#ef4444', fontWeight: 'bold', marginBottom: '2px' }}>
-            {astreintesPayees.length}
-          </div>
-          <div style={{ color: '#6b7280' }}>Astreintes payées</div>
-        </div>
-		
       </div>
 
 
