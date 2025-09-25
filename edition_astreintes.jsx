@@ -398,7 +398,7 @@ const Component = () => {
 		🖨️ Imprimer / Sauvegarder en PDF
 	  </button>
 	  
-	  <button onclick="window.close()" style="
+	  <button class="print-button" onclick="window.close()" style="
 		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 		color: white;
 		border: none;
@@ -497,7 +497,11 @@ const Component = () => {
   // Ouvrir page d'impression
   const openPrintPage = (etat) => {
     const htmlContent = generateEtatForPrint(etat);
-    const newWindow = window.open('', '_blank', 'width=900,height=700');
+	const w = 900;
+	const h = 700;
+	const l = (screen.width/2)-(w/2);
+	const t = (screen.height/2)-(h/2);
+    const newWindow = window.open('', '_blank', 'width='+w+',height='+h+',top='+t+', left='+l);
     newWindow.document.write(htmlContent);
     newWindow.document.close();
     
