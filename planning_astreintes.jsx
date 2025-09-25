@@ -840,7 +840,7 @@ const Component = () => {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
         <div style={{ fontSize: '48px', marginBottom: '20px' }}>📅</div>
-        <div>Chargement du calendrier des astreintes...</div>
+        <div>Chargement du planning des astreintes...</div>
       </div>
     );
   }
@@ -863,7 +863,7 @@ const Component = () => {
           justifyContent: 'center', 
           gap: '2px' 
         }}>
-          📅 Calendrier des Astreintes
+          📅 Planning des astreintes
         </h1>
         <p style={{ fontSize: '1rem', opacity: '0.9' }}>
           Gestion prévisionnelle des astreintes par service

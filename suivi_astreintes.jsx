@@ -707,7 +707,7 @@ const Component = () => {
           📋 Suivi des astreintes
         </h1>
         <p style={{ fontSize: '1rem', opacity: '0.9' }}>
-          Suivi et validation des astreintes réalisées
+          Suivi et validation des astreintes réalisées par service
         </p>
       </div>
 
