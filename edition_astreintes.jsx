@@ -4,13 +4,22 @@ const Component = () => {
   const [utilisateurs, setUtilisateurs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedEtats, setSelectedEtats] = useState(new Set());
+  const [selectedEtat, setSelectedEtat] = useState(null); // MODIFICATION : sélection unique
   const [processing, setProcessing] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(''); // AJOUT : filtre par mois
+  const [selectedYear, setSelectedYear] = useState(''); // AJOUT : filtre par année
   const itemsPerPage = 10;
 
   useEffect(() => {
     loadData();
+    initializeDefaultDate(); // AJOUT : initialiser la date par défaut
   }, []);
+
+  // AJOUT : Effect pour filtrer quand la période change
+  useEffect(() => {
+    setCurrentPage(1); // Revenir à la première page lors du changement de filtre
+    setSelectedEtat(null); // Désélectionner lors du changement de filtre
+  }, [selectedMonth, selectedYear]);
 
   const loadData = async () => {
     try {
@@ -32,6 +41,33 @@ const Component = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // AJOUT : Initialiser la date par défaut (mois précédent)
+  const initializeDefaultDate = () => {
+    const today = new Date();
+    const previousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    setSelectedYear(previousMonth.getFullYear().toString());
+    setSelectedMonth(String(previousMonth.getMonth() + 1).padStart(2, '0'));
+  };
+
+  // AJOUT : Fonction pour obtenir le nom du mois
+  const getMonthName = (monthNumber) => {
+    const months = [
+      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ];
+    return months[parseInt(monthNumber) - 1] || '';
+  };
+
+  // AJOUT : Fonction pour filtrer les états selon la période
+  const getFilteredEtats = () => {
+    if (!selectedMonth || !selectedYear) {
+      return etats;
+    }
+    
+    const periodFilter = `${selectedYear}-${selectedMonth}`;
+    return etats.filter(etat => etat.Periode === periodFilter);
   };
 
   const isResponsable = () => {
@@ -429,14 +465,14 @@ const Component = () => {
     }, 1500);
   };
 
-  // Gestion de l'édition
-  const handleEditerEtats = async () => {
-    if (selectedEtats.size === 0) {
-      alert('Veuillez sélectionner au moins un état de paiement');
+  // MODIFICATION : Gestion de l'édition pour sélection unique
+  const handleEditerEtat = async () => {
+    if (!selectedEtat) {
+      alert('Veuillez sélectionner un état de paiement');
       return;
     }
 
-    const message = `Confirmer l'édition de ${selectedEtats.size} état${selectedEtats.size > 1 ? 's' : ''} de paiement ?`;
+    const message = `Confirmer l'édition de l'état de paiement "${selectedEtat.Nom}" ?`;
     
     if (!confirm(message)) {
       return;
@@ -448,25 +484,14 @@ const Component = () => {
       const currentTimestamp = Math.floor(Date.now() / 1000);
       
       // Mettre à jour la date d'édition
-      for (const etatId of selectedEtats) {
-        await gristAPI.updateRecord('Astreintes_Etats', etatId, {
-          Date_Edition: currentTimestamp
-        });
-      }
+      await gristAPI.updateRecord('Astreintes_Etats', selectedEtat.id, {
+        Date_Edition: currentTimestamp
+      });
 
-      // Ouvrir chaque état dans un nouvel onglet pour impression
-      for (const etatId of selectedEtats) {
-        const etat = etats.find(e => e.id === etatId);
-        if (etat) {
-          openPrintPage(etat);
-          // Délai entre l'ouverture de chaque onglet
-          await new Promise(resolve => setTimeout(resolve, 800));
-        }
-      }
+      // Ouvrir la page d'impression
+      openPrintPage(selectedEtat);
 
-      // alert(`${selectedEtats.size} page${selectedEtats.size > 1 ? 's' : ''} d'impression ouverte${selectedEtats.size > 1 ? 's' : ''}. Utilisez Ctrl+P ou Cmd+P puis "Enregistrer au format PDF" dans chaque onglet.`);
-      
-      setSelectedEtats(new Set());
+      setSelectedEtat(null);
       await loadData();
 
     } catch (error) {
@@ -477,35 +502,21 @@ const Component = () => {
     }
   };
 
-  const totalPages = Math.ceil(etats.length / itemsPerPage);
+  // MODIFICATION : Utiliser les états filtrés
+  const filteredEtats = getFilteredEtats();
+  const totalPages = Math.ceil(filteredEtats.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentEtats = etats.slice(startIndex, startIndex + itemsPerPage);
+  const currentEtats = filteredEtats.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    setSelectedEtats(new Set());
+    setSelectedEtat(null); // MODIFICATION : désélectionner lors du changement de page
   };
 
-  const handleSelectAll = (checked) => {
-    if (checked) {
-      const currentIds = new Set(currentEtats.map(etat => etat.id));
-      setSelectedEtats(currentIds);
-    } else {
-      setSelectedEtats(new Set());
-    }
+  // MODIFICATION : Gestion de la sélection unique
+  const handleSelectEtat = (etat) => {
+    setSelectedEtat(selectedEtat?.id === etat.id ? null : etat);
   };
-
-  const handleSelectEtat = (etatId, checked) => {
-    const newSelected = new Set(selectedEtats);
-    if (checked) {
-      newSelected.add(etatId);
-    } else {
-      newSelected.delete(etatId);
-    }
-    setSelectedEtats(newSelected);
-  };
-
-  const isAllSelected = currentEtats.length > 0 && currentEtats.every(etat => selectedEtats.has(etat.id));
 
   if (loading) {
     return (
@@ -560,6 +571,91 @@ const Component = () => {
 
       {isResponsable() && (
         <>
+          {/* AJOUT : Sélection du mois et de l'année */}
+          <div style={{
+            background: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            marginBottom: '20px'
+          }}>
+
+			<h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
+			  📅 Sélection du mois
+			</h2>          
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'end', flexWrap: 'wrap' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
+                  Mois
+                </label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    minWidth: '140px'
+                  }}
+                >
+                  <option value="">Tous les mois</option>
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const month = String(i + 1).padStart(2, '0');
+                    const monthName = new Date(2000, i, 1).toLocaleDateString('fr-FR', { month: 'long' });
+                    return (
+                      <option key={month} value={month}>
+                        {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
+                  Année
+                </label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    minWidth: '100px'
+                  }}
+                >
+                  <option value="">Toutes les années</option>
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const year = new Date().getFullYear() - 2 + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+			  
+			  {selectedMonth && selectedYear && (
+			    <div style={{
+				  background: '#f3f4f6',
+				  padding: '8px 15px',
+				  borderRadius: '6px',
+				  fontWeight: '500',
+				  color: '#1f2937',
+				  fontSize: '14px',
+				  whiteSpace: 'nowrap'
+			    }}>
+				  {getMonthName(selectedMonth)} {selectedYear}
+			    </div>
+			  )}
+
+            </div>
+          </div>
+
           {/* Tableau des états */}
           <div style={{
             background: 'white',
@@ -574,7 +670,12 @@ const Component = () => {
               borderBottom: '1px solid #e2e8f0'
             }}>
               <h2 style={{ margin: '0', color: '#1f2937', fontSize: '20px' }}>
-                États de paiement des astreintes ({etats.length} état{etats.length > 1 ? 's' : ''})
+                États de paiement des astreintes ({filteredEtats.length} état{filteredEtats.length > 1 ? 's' : ''})
+                {selectedMonth && selectedYear && (
+                  <span style={{ color: '#6b7280', fontSize: '16px', fontWeight: 'normal' }}>
+                    {' '}- {getMonthName(selectedMonth)} {selectedYear}
+                  </span>
+                )}
               </h2>
             </div>
 
@@ -586,6 +687,7 @@ const Component = () => {
               }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9' }}>
+                    {/* MODIFICATION : Suppression de la colonne "Sélectionner tout" */}
                     <th style={{
                       padding: '15px 20px',
                       textAlign: 'left',
@@ -594,12 +696,7 @@ const Component = () => {
                       borderBottom: '2px solid #e2e8f0',
                       width: '50px'
                     }}>
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                      />
+                      Sélection
                     </th>
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Nom</th>
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Date création</th>
@@ -612,21 +709,25 @@ const Component = () => {
                 <tbody>
                   {currentEtats.map((etat, index) => (
                     <tr key={etat.id} style={{
-                      background: selectedEtats.has(etat.id) ? '#f0f9ff' : (index % 2 === 0 ? 'white' : '#f8fafc'),
-                      borderBottom: '1px solid #e2e8f0'
-                    }}>
+                      background: selectedEtat?.id === etat.id ? '#f0f9ff' : (index % 2 === 0 ? 'white' : '#f8fafc'),
+                      borderBottom: '1px solid #e2e8f0',
+                      cursor: 'pointer' // AJOUT : curseur pointer pour toute la ligne
+                    }}
+                    onClick={() => handleSelectEtat(etat)} // AJOUT : sélection en cliquant sur la ligne
+                    >
                       <td style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0' }}>
+                        {/* MODIFICATION : Radio button au lieu de checkbox */}
                         <input
-                          type="checkbox"
-                          checked={selectedEtats.has(etat.id)}
-                          onChange={(e) => handleSelectEtat(etat.id, e.target.checked)}
+                          type="radio"
+                          checked={selectedEtat?.id === etat.id}
+                          onChange={() => handleSelectEtat(etat)}
                           style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                         />
                       </td>
                       <td style={{ 
                         padding: '15px 20px', 
                         borderBottom: '1px solid #e2e8f0',
-                        fontWeight: selectedEtats.has(etat.id) ? '600' : 'normal'
+                        fontWeight: selectedEtat?.id === etat.id ? '600' : 'normal'
                       }}>
                         {etat.Nom}
                       </td>
@@ -729,13 +830,13 @@ const Component = () => {
             textAlign: 'center'
           }}>
             <button
-              onClick={handleEditerEtats}
-              disabled={selectedEtats.size === 0 || processing}
+              onClick={handleEditerEtat}
+              disabled={!selectedEtat || processing}
               style={{
-                background: (selectedEtats.size === 0 || processing) 
+                background: (!selectedEtat || processing) 
                   ? '#d1d5db' 
                   : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                color: (selectedEtats.size === 0 || processing) 
+                color: (!selectedEtat || processing) 
                   ? '#9ca3af' 
                   : 'white',
                 border: 'none',
@@ -743,7 +844,7 @@ const Component = () => {
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: '600',
-                cursor: (selectedEtats.size === 0 || processing) 
+                cursor: (!selectedEtat || processing) 
                   ? 'not-allowed' 
                   : 'pointer',
                 display: 'flex',
@@ -765,24 +866,24 @@ const Component = () => {
                   <span>🖨️</span>
                   <span>
                     Éditer pour impression
-                    {selectedEtats.size > 0 && ` (${selectedEtats.size})`}
+                    {selectedEtat && ` - ${selectedEtat.Nom.substring(0, 30)}...`}
                   </span>
                 </>
               )}
             </button>
             
-            {selectedEtats.size === 0 && (
+            {!selectedEtat && (
               <div style={{
                 marginTop: '4px',
                 color: '#6b7280',
                 fontSize: '14px',
                 fontStyle: 'italic'
               }}>
-                Sélectionnez au moins un état de paiement pour l'éditer
+                Sélectionnez un état de paiement pour l'éditer
               </div>
             )}
             
-            {selectedEtats.size > 0 && (
+            {selectedEtat && (
               <div style={{
                 marginTop: '4px',
                 // padding: '2px',
@@ -791,14 +892,14 @@ const Component = () => {
                 fontSize: '14px',
                 color: '#0369a1'
               }}>
-                📌 Les pages s'ouvriront dans de nouveaux onglets. Utilisez <strong>Ctrl+P</strong> puis <strong>"Enregistrer au format PDF"</strong> dans chaque onglet.
+                📌 La page s'ouvrira dans un nouvel onglet. Utilisez <strong>Ctrl+P</strong> puis <strong>"Enregistrer au format PDF"</strong>.
               </div>
             )}
           </div>
         </>
       )}
 
-      {/* Statistiques - SUPPRESSION de la statistique "Astreintes payées" */}
+      {/* Statistiques - MODIFICATION : utiliser les états filtrés */}
       <div style={{
         marginTop: '30px',
         display: 'grid',
@@ -813,7 +914,7 @@ const Component = () => {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '24px', color: '#8b5cf6', fontWeight: 'bold', marginBottom: '2px' }}>
-            {etats.length}
+            {filteredEtats.length}
           </div>
           <div style={{ color: '#6b7280' }}>Total états</div>
         </div>
@@ -826,7 +927,7 @@ const Component = () => {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '24px', color: '#10b981', fontWeight: 'bold', marginBottom: '2px' }}>
-            {etats.filter(e => e.Date_Edition).length}
+            {filteredEtats.filter(e => e.Date_Edition).length}
           </div>
           <div style={{ color: '#6b7280' }}>États édités</div>
         </div>
@@ -839,12 +940,11 @@ const Component = () => {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '24px', color: '#f59e0b', fontWeight: 'bold', marginBottom: '2px' }}>
-            {etats.filter(e => !e.Date_Edition).length}
+            {filteredEtats.filter(e => !e.Date_Edition).length}
           </div>
           <div style={{ color: '#6b7280' }}>États non édités</div>
         </div>
       </div>
-
 
       {/* Guide d'utilisation */}
       <div style={{
@@ -879,9 +979,10 @@ const Component = () => {
             <div style={{ fontSize: '32px', marginBottom: '15px', textAlign: 'center' }}>🖨️</div>
             <h4 style={{ margin: '0 0 10px 0', color: '#0c4a6e', textAlign: 'center' }}>Impression PDF</h4>
             <div style={{ fontSize: '14px', color: '#0369a1', lineHeight: '1.6' }}>
-              • Sélectionnez les états à éditer<br />
+              • Filtrez par mois/année si nécessaire<br />
+              • Sélectionnez l'état à éditer<br />
               • Cliquez sur "Éditer pour impression"<br />
-              • Les pages s'ouvriront automatiquement<br />
+              • La page s'ouvrira automatiquement<br />
               • Utilisez <strong>Ctrl+P</strong> ou <strong>Cmd+P</strong><br />
               • Sélectionnez "Enregistrer au format PDF"
             </div>
@@ -893,14 +994,14 @@ const Component = () => {
             borderRadius: '8px',
             border: '1px solid #8b5cf6'
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '15px', textAlign: 'center' }}>✨</div>
-            <h4 style={{ margin: '0 0 10px 0', color: '#6b21a8', textAlign: 'center' }}>Qualité optimale</h4>
+            <div style={{ fontSize: '32px', marginBottom: '15px', textAlign: 'center' }}>🗂️</div>
+            <h4 style={{ margin: '0 0 10px 0', color: '#6b21a8', textAlign: 'center' }}>Filtre par période</h4>
             <div style={{ fontSize: '14px', color: '#7c3aed', lineHeight: '1.6' }}>
-              • Logos haute définition conservés<br />
-              • Mise en page professionnelle<br />
-              • Couleurs et bordures préservées<br />
-              • Format A4 standardisé<br />
-              • Compatible tous navigateurs
+              • Sélectionnez un mois et une année<br />
+              • Les états seront filtrés automatiquement<br />
+              • Par défaut : mois précédent<br />
+              • Laissez vide pour voir tous les états<br />
+              • Le compteur se met à jour en temps réel
             </div>
           </div>
           
@@ -911,13 +1012,13 @@ const Component = () => {
             border: '1px solid #10b981'
           }}>
             <div style={{ fontSize: '32px', marginBottom: '15px', textAlign: 'center' }}>🔒</div>
-            <h4 style={{ margin: '0 0 10px 0', color: '#047857', textAlign: 'center' }}>Sécurisé</h4>
+            <h4 style={{ margin: '0 0 10px 0', color: '#047857', textAlign: 'center' }}>Sélection unique</h4>
             <div style={{ fontSize: '14px', color: '#059669', lineHeight: '1.6' }}>
-              • Aucune bibliothèque externe<br />
-              • Traitement local uniquement<br />
-              • Pas d'envoi de données<br />
-              • Date d'édition automatique<br />
-              • Traçabilité complète
+              • Un seul état sélectionnable à la fois<br />
+              • Cliquez sur la ligne pour sélectionner<br />
+              • Recliquez pour désélectionner<br />
+              • Édition instantanée une fois sélectionné<br />
+              • Date d'édition automatique
             </div>
           </div>
         </div>
@@ -939,7 +1040,7 @@ const Component = () => {
           }}>
             <span style={{ fontSize: '16px' }}>⚠️</span>
             <div>
-              <strong>Important :</strong> Autorisez les fenêtres pop-up dans votre navigateur pour permettre l'ouverture automatique des pages d'impression. Si les pages ne s'ouvrent pas, vérifiez les paramètres de votre bloqueur de pop-up.
+              <strong>Important :</strong> Autorisez les fenêtres pop-up dans votre navigateur pour permettre l'ouverture automatique de la page d'impression. Si la page ne s'ouvre pas, vérifiez les paramètres de votre bloqueur de pop-up.
             </div>
           </div>
         </div>
