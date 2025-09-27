@@ -8,6 +8,7 @@ const Component = () => {
   const [processing, setProcessing] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(''); // AJOUT : filtre par mois
   const [selectedYear, setSelectedYear] = useState(''); // AJOUT : filtre par année
+  const [currentDate, setCurrentDate] = useState(new Date());
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -43,12 +44,36 @@ const Component = () => {
     }
   };
 
-  // AJOUT : Initialiser la date par défaut (mois précédent)
   const initializeDefaultDate = () => {
     const today = new Date();
-    const previousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    setSelectedYear(previousMonth.getFullYear().toString());
-    setSelectedMonth(String(previousMonth.getMonth() + 1).padStart(2, '0'));
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    setCurrentDate(currentMonth); // AJOUT : définir currentDate
+    setSelectedYear(currentMonth.getFullYear().toString());
+    setSelectedMonth(String(currentMonth.getMonth() + 1).padStart(2, '0'));
+  };
+  
+  const navigatePrevious = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentDate(newDate);
+    setSelectedYear(newDate.getFullYear().toString());
+    setSelectedMonth(String(newDate.getMonth() + 1).padStart(2, '0'));
+  };
+
+  const navigateNext = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentDate(newDate);
+    setSelectedYear(newDate.getFullYear().toString());
+    setSelectedMonth(String(newDate.getMonth() + 1).padStart(2, '0'));
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    setCurrentDate(currentMonth);
+    setSelectedYear(currentMonth.getFullYear().toString());
+    setSelectedMonth(String(currentMonth.getMonth() + 1).padStart(2, '0'));
   };
 
   // AJOUT : Fonction pour obtenir le nom du mois
@@ -70,10 +95,10 @@ const Component = () => {
     return etats.filter(etat => etat.Periode === periodFilter);
   };
 
-  const isResponsable = () => {
+  const isGestionnaire = () => {
     if (!utilisateurs || utilisateurs.length === 0) return false;
     const premierUtilisateur = utilisateurs[0];
-    return premierUtilisateur.Responsable === true;
+    return premierUtilisateur.Gestionnaire === true;
   };
 
   const formatDate = (timestamp) => {
@@ -600,7 +625,7 @@ const Component = () => {
         </p>
       </div>
 
-      {!isResponsable() && (
+      {!isGestionnaire() && (
         <div style={{
           background: '#fef3c7',
           border: '1px solid #f59e0b',
@@ -616,91 +641,86 @@ const Component = () => {
         </div>
       )}
 
-      {isResponsable() && (
+      {isGestionnaire() && (
         <>
           {/* AJOUT : Sélection du mois et de l'année */}
           <div style={{
+		    display: 'grid',
+		    gridTemplateColumns: 'auto 20px 2fr',
             background: 'white',
-            padding: '20px',
+            padding: '10px',
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             marginBottom: '20px'
           }}>
-            <h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
-              📅 Sélection du mois
-            </h2>
-            
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'end', flexWrap: 'wrap' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
-                Mois
-              </label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  minWidth: '140px'
-                }}
-              >
-                <option value="">Sélectionner</option>
-                {Array.from({ length: 12 }, (_, i) => {
-                  const month = String(i + 1).padStart(2, '0');
-                  const monthName = new Date(2000, i, 1).toLocaleDateString('fr-FR', { month: 'long' });
-                  return (
-                    <option key={month} value={month}>
-                      {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
-                Année
-              </label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  minWidth: '100px'
-                }}
-              >
-                <option value="">Sélectionner</option>
-                {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - 2 + i;
-                  return (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            {selectedMonth && selectedYear && (
-              <div style={{
-                background: '#f3f4f6',
-                padding: '8px 15px',
-                borderRadius: '6px',
-                fontWeight: '500',
-                color: '#1f2937',
-                fontSize: '14px',
-                whiteSpace: 'nowrap'
-              }}>
-                {getMonthName(selectedMonth)} {selectedYear}
-              </div>
-            )}
+			<div>
+              <h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
+                📅 Sélection du mois
+              </h2>
+			</div>
+			<div></div>
+		    <div style={{
+			  display: 'flex',
+			  justifyContent: 'space-between',
+			  alignItems: 'center',
+			  marginBottom: '15px',
+			  flexWrap: 'wrap',
+			  gap: '15px'
+		    }}>
+			  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+			    <button 
+				  onClick={navigatePrevious} 
+				  style={{
+				    background: '#6b7280',
+				    color: 'white',
+				    border: 'none',
+				    padding: '8px 12px',
+				    borderRadius: '6px',
+				    cursor: 'pointer'
+				  }}
+			    >
+				  ←
+			    </button>
+			  
+			    <button 
+				  onClick={goToToday} 
+				  style={{
+				    background: '#10b981',
+				    color: 'white',
+				    border: 'none',
+				    padding: '8px 16px',
+				    borderRadius: '6px',
+				    cursor: 'pointer'
+				  }}
+			    >
+				  Aujourd'hui
+			    </button>
+			  
+			    <button 
+				  onClick={navigateNext} 
+				  style={{
+				    background: '#6b7280',
+				    color: 'white',
+				    border: 'none',
+				    padding: '8px 12px',
+				    borderRadius: '6px',
+				    cursor: 'pointer'
+				  }}
+			    >
+				  →
+			    </button>
+			  
+			    <h3 style={{ 
+				  margin: '0 0 0 15px', 
+				  color: '#1f2937', 
+				  textTransform: 'capitalize',
+				  fontSize: '18px'
+			    }}>
+				  {getMonthName(selectedMonth)} {selectedYear}
+			    </h3>
+			  </div>
+		    </div>
           </div>
-        </div>
 
           {/* Tableau des états */}
           <div style={{
@@ -716,7 +736,7 @@ const Component = () => {
               borderBottom: '1px solid #e2e8f0'
             }}>
               <h2 style={{ margin: '0', color: '#1f2937', fontSize: '20px' }}>
-                États de paiement des astreintes 
+                📄 États de paiement des astreintes 
               </h2>
             </div>
 

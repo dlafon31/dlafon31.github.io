@@ -20,6 +20,7 @@ const Component = () => {
     commentaire: ''
   });
   const [processing, setProcessing] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => { 
     loadData(); 
@@ -64,9 +65,34 @@ const Component = () => {
 
   const initializeDefaultDate = () => {
     const today = new Date();
-    const previousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    setSelectedYear(previousMonth.getFullYear().toString());
-    setSelectedMonth(String(previousMonth.getMonth() + 1).padStart(2, '0'));
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    setCurrentDate(currentMonth); // AJOUT : définir currentDate
+    setSelectedYear(currentMonth.getFullYear().toString());
+    setSelectedMonth(String(currentMonth.getMonth() + 1).padStart(2, '0'));
+  };
+  
+  const navigatePrevious = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentDate(newDate);
+    setSelectedYear(newDate.getFullYear().toString());
+    setSelectedMonth(String(newDate.getMonth() + 1).padStart(2, '0'));
+  };
+
+  const navigateNext = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentDate(newDate);
+    setSelectedYear(newDate.getFullYear().toString());
+    setSelectedMonth(String(newDate.getMonth() + 1).padStart(2, '0'));
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    setCurrentDate(currentMonth);
+    setSelectedYear(currentMonth.getFullYear().toString());
+    setSelectedMonth(String(currentMonth.getMonth() + 1).padStart(2, '0'));
   };
 
   const calculateStatistics = () => {
@@ -226,10 +252,10 @@ const Component = () => {
     });
   };
 
-  const isResponsable = () => {
+  const isGestionnaire = () => {
     if (!utilisateurs || utilisateurs.length === 0) return false;
     const premierUtilisateur = utilisateurs[0];
-    return premierUtilisateur.Responsable === true;
+    return premierUtilisateur.Gestionnaire === true;
   };
 
   if (loading) {
@@ -268,105 +294,97 @@ const Component = () => {
       </div>
 
       {/* Sélection du mois et statistiques sur la même ligne */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: selectedMonth && selectedYear ? '1fr 2fr' : '1fr',
-        gap: '20px',
-        marginBottom: '20px'
-      }}>
+
         {/* Sélection du mois */}
-        <div style={{
-          background: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
-            📅 Sélection du mois
-          </h2>
-          
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'end', flexWrap: 'wrap' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
-                Mois
-              </label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  minWidth: '140px'
-                }}
-              >
-                <option value="">Sélectionner</option>
-                {Array.from({ length: 12 }, (_, i) => {
-                  const month = String(i + 1).padStart(2, '0');
-                  const monthName = new Date(2000, i, 1).toLocaleDateString('fr-FR', { month: 'long' });
-                  return (
-                    <option key={month} value={month}>
-                      {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151', fontSize: '13px' }}>
-                Année
-              </label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  minWidth: '100px'
-                }}
-              >
-                <option value="">Sélectionner</option>
-                {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - 2 + i;
-                  return (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            {selectedMonth && selectedYear && (
-              <div style={{
-                background: '#f3f4f6',
-                padding: '8px 15px',
-                borderRadius: '6px',
-                fontWeight: '500',
-                color: '#1f2937',
-                fontSize: '14px',
-                whiteSpace: 'nowrap'
-              }}>
-                {getMonthName(selectedMonth)} {selectedYear}
-              </div>
-            )}
-          </div>
-        </div>
-
+		<div style={{
+		  display: 'grid',
+		  gridTemplateColumns: 'auto 20px 2fr',
+		  background: 'white',
+		  padding: '10px',
+		  borderRadius: '8px',
+		  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+		}}>
+		  <div>
+		    <h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
+			  📅 Sélection du mois
+		    </h2>
+		  </div>
+		  <div></div>
+		  
+		  <div style={{
+			display: 'flex',
+			justifyContent: 'space-between',
+			alignItems: 'center',
+			marginBottom: '15px',
+			flexWrap: 'wrap',
+			gap: '15px'
+		  }}>
+			<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+			  <button 
+				onClick={navigatePrevious} 
+				style={{
+				  background: '#6b7280',
+				  color: 'white',
+				  border: 'none',
+				  padding: '8px 12px',
+				  borderRadius: '6px',
+				  cursor: 'pointer'
+				}}
+			  >
+				←
+			  </button>
+			  
+			  <button 
+				onClick={goToToday} 
+				style={{
+				  background: '#10b981',
+				  color: 'white',
+				  border: 'none',
+				  padding: '8px 16px',
+				  borderRadius: '6px',
+				  cursor: 'pointer'
+				}}
+			  >
+				Aujourd'hui
+			  </button>
+			  
+			  <button 
+				onClick={navigateNext} 
+				style={{
+				  background: '#6b7280',
+				  color: 'white',
+				  border: 'none',
+				  padding: '8px 12px',
+				  borderRadius: '6px',
+				  cursor: 'pointer'
+				}}
+			  >
+				→
+			  </button>
+			  
+			  <h3 style={{ 
+				margin: '0 0 0 15px', 
+				color: '#1f2937', 
+				textTransform: 'capitalize',
+				fontSize: '18px'
+			  }}>
+				{getMonthName(selectedMonth)} {selectedYear}
+			  </h3>
+			</div>
+		  </div>
+		  
+		</div>
+		
         {/* Statistiques du mois */}
         {selectedMonth && selectedYear && (
           <div style={{
             background: 'white',
-            padding: '20px',
+            padding: '10px',
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
             <h2 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>
-              📊 Statistiques - {getMonthName(selectedMonth)} {selectedYear}
+              📊 Etat de situation des astreintes du mois
             </h2>
 
             <div style={{
@@ -454,13 +472,12 @@ const Component = () => {
             </div>
           </div>
         )}
-      </div>
 
       {/* Mise en paiement */}
-      {selectedMonth && selectedYear && isResponsable() && (
+      {selectedMonth && selectedYear && isGestionnaire() && (
         <div style={{
           background: 'white',
-          padding: '20px',
+          padding: '10px',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           marginBottom: '20px'
@@ -491,19 +508,6 @@ const Component = () => {
                 <option value="ENVT">ENVT</option>
                 <option value="ETAT">ÉTAT</option>
               </select>
-              {formData.budget && (
-                <div style={{
-                  marginTop: '6px',
-                  padding: '6px 10px',
-                  background: formData.budget === 'ETAT' ? '#fee2e2' : '#f3e8ff',
-                  color: formData.budget === 'ETAT' ? '#dc2626' : '#9333ea',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: '500'
-                }}>
-                  {getAstreintesToPay().length} astreinte{getAstreintesToPay().length > 1 ? 's' : ''} à payer
-                </div>
-              )}
             </div>
 
             <div>
@@ -596,7 +600,7 @@ const Component = () => {
             
             {(!formData.budget || !formData.gestionnaire) && (
               <div style={{
-                marginTop: '8px',
+                marginTop: '2px',
                 color: '#ef4444',
                 fontSize: '13px',
                 fontWeight: '500'
@@ -607,8 +611,8 @@ const Component = () => {
             
             {formData.budget && formData.gestionnaire && getAstreintesToPay().length === 0 && (
               <div style={{
-                marginTop: '8px',
-                color: '#f59e0b',
+                marginTop: '2px',
+                color: '#ef4444',
                 fontSize: '13px',
                 fontWeight: '500'
               }}>
@@ -619,7 +623,7 @@ const Component = () => {
         </div>
       )}
 
-      {!isResponsable() && selectedMonth && selectedYear && (
+      {!isGestionnaire() && selectedMonth && selectedYear && (
         <div style={{
           background: '#fef3c7',
           border: '1px solid #f59e0b',
