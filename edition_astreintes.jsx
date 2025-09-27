@@ -764,7 +764,8 @@ const Component = () => {
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Support</th>
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Gestionnaire</th>
                     <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Date édition</th>
-                    <th style={{ padding: '15px 20px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Nbr d'astreintes</th>
+                    <th style={{ padding: '15px 20px', textAlign: 'center', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Nbr d'astreintes</th>
+					<th style={{ padding: '15px 20px', textAlign: 'center', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Commentaire</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -827,6 +828,15 @@ const Component = () => {
                         fontWeight: '500'
                       }}>
                         {etat.Nbr_Astreintes || 0}
+                      </td>
+                      <td style={{
+                        padding: '15px 20px',
+                        borderBottom: '1px solid #e2e8f0',
+                        color: '#374151',
+                        textAlign: 'center',
+                        fontWeight: '500'
+                      }}>
+                        {etat.Commentaire}
                       </td>
                     </tr>
                   ))}

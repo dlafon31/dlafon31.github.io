@@ -191,7 +191,7 @@ const Component = () => {
 
       // 2. Récupérer l'enregistrement créé pour obtenir sa valeur Ref
       const etatsData = await gristAPI.getData('Astreintes_Etats');
-      const etatCree = etatsData.find(e => e.Nom === etatNom);
+      const etatCree = etatsData.find(e => e.Date_EtatPaiement === currentTimestamp);
       
       if (!etatCree) {
         throw new Error('Impossible de retrouver l\'état de paiement créé');
