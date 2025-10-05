@@ -3,9 +3,9 @@ const Component = () => {
   const [services, setServices] = useState([]);
   const [personnels, setPersonnels] = useState([]);
   const [utilisateurs, setUtilisateurs] = useState([]);
-  const [joursSemaine, setJoursSemaine] = useState([]); // AJOUT
-  const [joursFeries, setJoursFeries] = useState([]); // AJOUT
-  const [servicesCliniques, setServicesCliniques] = useState([]); // AJOUT
+  const [joursSemaine, setJoursSemaine] = useState([]);
+  const [joursFeries, setJoursFeries] = useState([]);
+  const [servicesCliniques, setServicesCliniques] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('mois');
@@ -23,6 +23,7 @@ const Component = () => {
     jourValidated: false,
     nuitValidated: false
   });
+  const [copiedWeek, setCopiedWeek] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -34,29 +35,27 @@ const Component = () => {
         servicesData, 
         personnelsData, 
         utilisateursData,
-        joursSemaineData, // AJOUT
-        joursSeriesData, // AJOUT
-        servicesCliniquesData // AJOUT
+        joursSemaineData,
+        joursSeriesData,
+        servicesCliniquesData
       ] = await Promise.all([
         gristAPI.getData('Astreintes'), 
         gristAPI.getData('Services'), 
         gristAPI.getData('Personnels'),
         gristAPI.getData('Utilisateurs'),
-        gristAPI.getData('JoursSemaine'), // AJOUT
-        gristAPI.getData('JoursFeries'), // AJOUT
-        gristAPI.getData('ServicesCliniques') // AJOUT
+        gristAPI.getData('JoursSemaine'),
+        gristAPI.getData('JoursFeries'),
+        gristAPI.getData('ServicesCliniques')
       ]);
       
       setAstreintes(Array.isArray(astreintesData) ? astreintesData : []);
       setServices(Array.isArray(servicesData) ? servicesData : []);
       setPersonnels(Array.isArray(personnelsData) ? personnelsData : []);
       setUtilisateurs(Array.isArray(utilisateursData) ? utilisateursData : []);
-      setJoursSemaine(Array.isArray(joursSemaineData) ? joursSemaineData : []); // AJOUT
-      setJoursFeries(Array.isArray(joursSeriesData) ? joursSeriesData : []); // AJOUT
-      setServicesCliniques(Array.isArray(servicesCliniquesData) ? servicesCliniquesData : []); // AJOUT
+      setJoursSemaine(Array.isArray(joursSemaineData) ? joursSemaineData : []);
+      setJoursFeries(Array.isArray(joursSeriesData) ? joursSeriesData : []);
+      setServicesCliniques(Array.isArray(servicesCliniquesData) ? servicesCliniquesData : []);
 
-      // AUTO-SÉLECTION : Si un seul service clinique est disponible
-      // Calculer les services cliniques disponibles après mise à jour des données
       if (Array.isArray(servicesData) && Array.isArray(utilisateursData) && utilisateursData.length > 0) {
         const premierUtilisateur = utilisateursData[0];
         let servicesAutorises = servicesData;
@@ -71,7 +70,6 @@ const Component = () => {
           .map(service => service.gristHelper_Display2)
           .filter((value, index, array) => array.indexOf(value) === index);
       
-        // Si un seul service clinique disponible, le sélectionner automatiquement
         if (servicesCliniques.length === 1) {
           setSelectedServiceClinique(servicesCliniques[0]);
         }
@@ -83,15 +81,14 @@ const Component = () => {
       setServices([]);
       setPersonnels([]);
       setUtilisateurs([]);
-      setJoursSemaine([]); // AJOUT
-      setJoursFeries([]); // AJOUT
-      setServicesCliniques([]); // AJOUT
+      setJoursSemaine([]);
+      setJoursFeries([]);
+      setServicesCliniques([]);
     } finally { 
       setLoading(false); 
     }
   };
 
-  // AJOUT : Fonction pour vérifier si une date est un jour férié
   const isJourFerie = (date) => {
     if (!date || !joursFeries || joursFeries.length === 0) return false;
     
@@ -107,23 +104,20 @@ const Component = () => {
     });
   };
 
-  // AJOUT : Fonction pour obtenir le type de jour de la semaine
   const getTypeJourSemaine = (date) => {
-    const dayOfWeek = date.getDay(); // 0 = dimanche, 1 = lundi, etc.
-    const rang = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convertir en rang (0 = lundi, 6 = dimanche)
+    const dayOfWeek = date.getDay();
+    const rang = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const jourSemaine = joursSemaine.find(js => js.Rang === rang);
     return jourSemaine ? jourSemaine.Type : null;
   };
 
-  // AJOUT : Fonction pour obtenir le nom du jour de la semaine
   const getNomJourSemaine = (date) => {
-    const dayOfWeek = date.getDay(); // 0 = dimanche, 1 = lundi, etc.
-    const rang = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convertir en rang (0 = lundi, 6 = dimanche)
+    const dayOfWeek = date.getDay();
+    const rang = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const jourSemaine = joursSemaine.find(js => js.Rang === rang);
     return jourSemaine ? jourSemaine.Jour : null;
   };
 
-  // AJOUT : Fonction pour vérifier si le samedi est ouvert pour un service clinique
   const isSamediOuvertPourService = (serviceId) => {
     if (!serviceId) return false;
     
@@ -134,7 +128,6 @@ const Component = () => {
     return serviceClinique && serviceClinique.Samedi === 'Ouvert';
   };
 
-  // AJOUT : Fonction pour vérifier si l'astreinte de jour doit être désactivée
   const shouldDisableJourAstreinte = (date, serviceId) => {
     if (!date) return false;
     
@@ -142,12 +135,10 @@ const Component = () => {
     const nomJour = getNomJourSemaine(date);
     const estJourFerie = isJourFerie(date);
     
-    // Règle 1: Jour ouvert + non férié → Pas d'astreinte de jour
     if (typeJour === 'Ouvert' && !estJourFerie) {
       return true;
     }
     
-    // Règle 2: Samedi non férié + Service clinique "Samedi=Ouvert" → Pas d'astreinte de jour
     if (nomJour === 'Samedi' && !estJourFerie && isSamediOuvertPourService(serviceId)) {
       return true;
     }
@@ -155,22 +146,26 @@ const Component = () => {
     return false;
   };
 
-  // AJOUT : Fonction pour obtenir le message d'explication de la désactivation
   const getDisabledJourMessage = (date, serviceId) => {
     if (!date) return '';
     
     const typeJour = getTypeJourSemaine(date);
     const nomJour = getNomJourSemaine(date);
     const estJourFerie = isJourFerie(date);
+	
+	if (typeJour === 'Ouvert' && estJourFerie) {
+      return `Astreinte en journée : jour férié`;
+    }
     
-    // Règle 1: Jour hors WE non férié
     if (typeJour === 'Ouvert' && !estJourFerie) {
       return `Pas d'astreinte en journée : jour ouvert non férié`;
     }
-    
-    // Règle 2: Samedi non férié + Service clinique ouvert le Samedi
+
+    if (nomJour === 'Samedi' && estJourFerie && isSamediOuvertPourService(serviceId)) {
+      return `Astreinte en journée : jour férié`;
+    }
+	
     if (nomJour === 'Samedi' && !estJourFerie && isSamediOuvertPourService(serviceId)) {
-      const service = services.find(s => s.id === parseInt(serviceId));
       return `Pas d'astreinte en journée : jour ouvert non férié`;
     }
     
@@ -255,13 +250,12 @@ const Component = () => {
       });
     } else if (viewMode === 'semaine') {
       const startOfWeek = new Date(currentDate);
-	  // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
-      const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
+      const dayOfWeek = startOfWeek.getDay();
       const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
     
       const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(endOfWeek.getDate() + 7); // +7 pour avoir le dernier jour
+      endOfWeek.setDate(endOfWeek.getDate() + 7);
     
       filteredAstreintes = filteredAstreintes.filter(a => {
         const aDate = new Date(a.Date * 1000);
@@ -289,8 +283,7 @@ const Component = () => {
         return `du mois de ${currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
       case 'semaine':
         const startOfWeek = new Date(currentDate);
-        // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
-        const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
+        const dayOfWeek = startOfWeek.getDay();
         const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
       
@@ -400,7 +393,6 @@ const Component = () => {
     setSelectedDate(date);
 	
 	const servicesAutorises = getServicesAutorises();
-	console.log('#DLA>', servicesAutorises.length);
 	
     const initialService = servicesAutorises.length === 1 ? servicesAutorises[0].id : '';
     const existingData = loadExistingAstreintes(date, initialService);
@@ -493,6 +485,117 @@ const Component = () => {
     }
   };
 
+  const handleCopyWeek = () => {
+    const startOfWeek = new Date(currentDate);
+    const dayOfWeek = startOfWeek.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+
+    const weekData = [];
+  
+    const servicesAutorises = getServicesAutorises();
+    const servicesAutoriseIds = servicesAutorises.map(s => s.id);
+  
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(startOfWeek);
+      dayDate.setDate(dayDate.getDate() + i);
+      const dayAstreintes = getFilteredAstreintes(getAstreintesForDate(dayDate));
+    
+      dayAstreintes.forEach(astreinte => {
+        if (servicesAutoriseIds.includes(astreinte.Service)) {
+          weekData.push({
+            dayOffset: i,
+            service: astreinte.Service,
+            clinicien: astreinte.Clinicien,
+            type: astreinte.Type
+          });
+        }
+      });
+    }
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+  
+    setCopiedWeek({
+      data: weekData,
+      startDate: startOfWeek,
+      endDate: endOfWeek
+    });
+  
+    // alert(`Semaine copiée ! ${weekData.length} astreinte(s) copiée(s).`);
+  };
+
+  const handlePasteWeek = async () => {
+    if (!copiedWeek || !copiedWeek.data || copiedWeek.data.length === 0) {
+      alert('Aucune semaine copiée. Veuillez d\'abord copier une semaine.');
+      return;
+    }
+
+    /*
+	if (!confirm(`Coller ${copiedWeek.data.length} astreinte(s) dans la semaine actuelle ?\n\nAttention : Les astreintes existantes non validées seront remplacées.`)) {
+      return;
+    }
+	*/
+
+    try {
+      const startOfWeek = new Date(currentDate);
+      const dayOfWeek = startOfWeek.getDay();
+      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const copiedAstreinte of copiedWeek.data) {
+        try {
+          const targetDate = new Date(startOfWeek);
+          targetDate.setDate(targetDate.getDate() + copiedAstreinte.dayOffset);
+          const dateTimestamp = Math.floor(targetDate.getTime() / 1000);
+
+          const existingAstreintes = getAstreintesForDate(targetDate);
+          const existingForService = existingAstreintes.filter(a => 
+            a.Service === copiedAstreinte.service && 
+            a.Type === copiedAstreinte.type
+          );
+
+          if (existingForService.length > 0) {
+            const existing = existingForService[0];
+            if (existing.ValidationService === true) {
+              console.log(`Astreinte validée ignorée pour ${formatDate(targetDate)}`);
+              continue;
+            }
+            
+            await gristAPI.updateRecord('Astreintes', existing.id, {
+              Clinicien: copiedAstreinte.clinicien
+            });
+          } else {
+            await gristAPI.addRecord('Astreintes', {
+              Service: copiedAstreinte.service,
+              Clinicien: copiedAstreinte.clinicien,
+              Date: dateTimestamp,
+              Type: copiedAstreinte.type
+            });
+          }
+          successCount++;
+        } catch (error) {
+          console.error('Erreur lors du collage d\'une astreinte:', error);
+          errorCount++;
+        }
+      }
+
+      await loadData();
+    
+      if (errorCount > 0) {
+        alert(`Collage terminé avec des erreurs.\n${successCount} astreinte(s) collée(s) avec succès.\n${errorCount} erreur(s).`);
+      } else {
+        // alert(`Semaine collée avec succès ! ${successCount} astreinte(s) créée(s) ou mise(s) à jour.`);
+      }
+    
+    } catch (error) {
+      alert('Erreur lors du collage de la semaine: ' + error.message);
+    }
+  };
+
   const renderYearView = () => {
     const year = currentDate.getFullYear(); 
     const months = [];
@@ -560,10 +663,8 @@ const Component = () => {
     const firstDay = new Date(year, month, 1); 
     const startDate = new Date(firstDay);
 	
-    // startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
-    // CORRECTION : Gérer correctement le cas où le premier jour du mois est un dimanche
-	const dayOfWeek = firstDay.getDay(); // 0 = dimanche, 1 = lundi, etc.
-	const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Si dimanche (0), reculer de 6 jours, sinon reculer de (dayOfWeek - 1) jours
+	const dayOfWeek = firstDay.getDay();
+	const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 	startDate.setDate(startDate.getDate() - daysToSubtract);
 	
     const days = []; 
@@ -607,12 +708,10 @@ const Component = () => {
             {dayAstreintes.length > 0 && (
               <div style={{ fontSize: '10px' }}>
                 {dayAstreintes.slice(0, 3).map((astreinte, index) => (
-				  // Déterminer si l'astreinte est validée
                   <div 
                     key={index} 
                     style={{ 
                       background: isJourAstreinte(astreinte) ? '#dbeafe' : '#e0f2fe',
-					  // Ajouter une bordure selon le statut validée ou non de l'astreintes
                       border: astreinte.ValidationService === true ? '1px solid #10b981' : '1px solid #3b82f6',
                       color: isJourAstreinte(astreinte) ? '#1e40af' : '#0c4a6e', 
                       padding: '2px 4px', 
@@ -679,10 +778,8 @@ const Component = () => {
 
   const renderWeekView = () => {
     const startOfWeek = new Date(currentDate);
-
-    // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
-    const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Si dimanche (0), reculer de 6 jours, sinon reculer de (dayOfWeek - 1) jours
+    const dayOfWeek = startOfWeek.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
   
     const days = [];
@@ -740,7 +837,6 @@ const Component = () => {
               {isResponsable() ? '✏️ Gérer astreinte' : '👁️ Consulter astreinte'}
             </button>
             {sortedAstreintes.map((astreinte, index) => {
-              // Déterminer si l'astreinte est validée
               const isValidated = astreinte.ValidationService === true;
               
               return (
@@ -753,9 +849,7 @@ const Component = () => {
                     marginBottom: '8px', 
                     fontSize: '12px', 
                     position: 'relative',
-                    // Ajouter une bordure selon le statut validée ou non de l'astreintes
                     border: isValidated ? '2px solid #10b981' : '2px solid #3b82f6',
-                    // Réduire l'opacité pour les astreintes validées
                     opacity: isValidated ? 0.7 : 1
                   }}
                 >
@@ -765,10 +859,8 @@ const Component = () => {
                   <div style={{ color: '#6b7280', marginBottom: '4px' }}>
                     {getClinicienName(astreinte.Clinicien)}
                   </div>
-                  {/* Modifier le bouton de suppression pour les astreintes validées */}
                   <button 
                     onClick={() => {
-                      // Empêcher la suppression si l'astreinte est validée
                       if (isValidated) {
                         alert('Impossible de supprimer une astreinte validée');
                         return;
@@ -779,23 +871,18 @@ const Component = () => {
                       position: 'absolute', 
                       top: '4px', 
                       right: '4px', 
-                      // Changer la couleur et le style pour les astreintes validées
                       background: isValidated ? '#d1d5db' : '#e3b1b1', 
                       color: isValidated ? '#6b7280' : '#ef4444', 
                       border: 'none', 
                       borderRadius: '3px', 
                       padding: '2px 4px', 
                       fontSize: '10px', 
-                      // Désactiver le curseur pour les astreintes validées
                       cursor: isValidated ? 'not-allowed' : (isResponsable() ? 'pointer' : 'default'),
-                      // Ajuster l'opacité selon le statut
                       opacity: isValidated ? 0.5 : (isResponsable() ? 1 : 0.3),
                       display: isResponsable() ? 'block' : 'none'
                     }}
-                    // Ajouter un title pour expliquer pourquoi le bouton est désactivé
                     title={isValidated ? 'Impossible de supprimer une astreinte validée' : 'Supprimer cette astreinte'}
                   >
-                    {/* Changer l'icône pour les astreintes validées */}
                     {isValidated ? '🔒' : '❌'}
                   </button>
                 </div>
@@ -827,8 +914,7 @@ const Component = () => {
         return currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
       case 'semaine':
         const startOfWeek = new Date(currentDate); 
-        // CORRECTION : Gérer correctement le cas où currentDate est un dimanche
-        const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, etc.
+        const dayOfWeek = startOfWeek.getDay();
         const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
       
@@ -837,8 +923,8 @@ const Component = () => {
         return `${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${endOfWeek.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
       default:
         return '';
-  }
-};
+    }
+  };
 
   if (loading) {
     return (
@@ -972,6 +1058,91 @@ const Component = () => {
         </div>
       </div>
 
+      {viewMode === 'semaine' && isResponsable() && (
+        <div style={{
+          background: 'white',
+          padding: '15px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '15px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={handleCopyWeek}
+              style={{
+                background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              📋 Copier cette semaine
+            </button>
+
+            <button
+              onClick={handlePasteWeek}
+              disabled={!copiedWeek || !copiedWeek.data || copiedWeek.data.length === 0}
+              style={{
+                background: (copiedWeek && copiedWeek.data && copiedWeek.data.length > 0) 
+                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+                  : '#d1d5db',
+                color: (copiedWeek && copiedWeek.data && copiedWeek.data.length > 0) ? 'white' : '#9ca3af',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: (copiedWeek && copiedWeek.data && copiedWeek.data.length > 0) ? 'pointer' : 'not-allowed',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              📑️ Coller la semaine copiée
+            </button>
+          </div>
+
+          <div style={{ 
+            fontSize: '13px', 
+            color: '#6b7280',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+			{copiedWeek && copiedWeek.data && copiedWeek.data.length > 0 ? (
+			  <span style={{ 
+				background: '#d1fae5', 
+				color: '#059669', 
+				padding: '4px 8px', 
+				borderRadius: '4px',
+				fontWeight: '600',
+				fontSize: '12px'
+			  }}>
+				✓ semaine du {copiedWeek.startDate.getDate()} - {copiedWeek.endDate.getDate()} {copiedWeek.endDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })} en mémoire : {copiedWeek.data.length} astreinte{copiedWeek.data.length > 1 ? 's' : ''} copiée{copiedWeek.data.length > 1 ? 's' : ''}
+			  </span>
+			) : (
+			  <span style={{ fontStyle: 'italic' }}>
+				ℹ️ Aucune semaine copiée
+			  </span>
+			)}
+          </div>
+        </div>
+      )}
+
       <div style={{ marginBottom: '30px' }}>
         {viewMode === 'année' && renderYearView()}
         {viewMode === 'mois' && renderMonthView()}
@@ -1032,8 +1203,8 @@ const Component = () => {
               </select>
             </div>
 
-            {/* AJOUT : Message d'information sur les règles de jour */}
-            {formData.service && shouldDisableJourAstreinte(selectedDate, formData.service) && (
+
+			{formData.service && (
               <div style={{
                 background: '#fef3c7',
                 border: '1px solid #f59e0b',
