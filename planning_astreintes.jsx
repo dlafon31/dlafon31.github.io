@@ -147,8 +147,8 @@ const Component = () => {
       return true;
     }
     
-    // Règle 2: Samedi + Service clinique "Samedi=Ouvert" → Pas d'astreinte de jour
-    if (nomJour === 'Samedi' && isSamediOuvertPourService(serviceId)) {
+    // Règle 2: Samedi non férié + Service clinique "Samedi=Ouvert" → Pas d'astreinte de jour
+    if (nomJour === 'Samedi' && !estJourFerie && isSamediOuvertPourService(serviceId)) {
       return true;
     }
     
@@ -163,15 +163,15 @@ const Component = () => {
     const nomJour = getNomJourSemaine(date);
     const estJourFerie = isJourFerie(date);
     
-    // Règle 1: Jour ouvert + non férié
+    // Règle 1: Jour hors WE non férié
     if (typeJour === 'Ouvert' && !estJourFerie) {
-      return `Les astreintes de jour ne sont pas autorisées les ${nomJour.toLowerCase()}s (jour ouvert)`;
+      return `Pas d'astreinte en journée : jour ouvert non férié`;
     }
     
-    // Règle 2: Samedi + Service clinique "Samedi=Ouvert"
-    if (nomJour === 'Samedi' && isSamediOuvertPourService(serviceId)) {
+    // Règle 2: Samedi non férié + Service clinique ouvert le Samedi
+    if (nomJour === 'Samedi' && !estJourFerie && isSamediOuvertPourService(serviceId)) {
       const service = services.find(s => s.id === parseInt(serviceId));
-      return `Les astreintes de jour ne sont pas autorisées le samedi pour le service ${service ? service.gristHelper_Display2 : ''} (service ouvert)`;
+      return `Pas d'astreinte en journée : jour ouvert non férié`;
     }
     
     return '';
@@ -398,7 +398,11 @@ const Component = () => {
 
   const handleDateClick = (date) => {
     setSelectedDate(date);
-    const initialService = '';
+	
+	const servicesAutorises = getServicesAutorises();
+	console.log('#DLA>', servicesAutorises.length);
+	
+    const initialService = servicesAutorises.length === 1 ? servicesAutorises[0].id : '';
     const existingData = loadExistingAstreintes(date, initialService);
     
     const year = date.getFullYear();
@@ -1001,7 +1005,7 @@ const Component = () => {
               } - {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long' })} {formatDate(selectedDate)}
             </h3>
 
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '4px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
                 Service *
               </label>
@@ -1034,15 +1038,12 @@ const Component = () => {
                 background: '#fef3c7',
                 border: '1px solid #f59e0b',
                 borderRadius: '6px',
-                padding: '12px',
-                marginBottom: '20px'
+                padding: '2px',
+                marginBottom: '4px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ color: '#d97706', marginRight: '8px' }}>⚠️</span>
-                  <span style={{ fontWeight: '500', color: '#92400e' }}>Information importante</span>
-                </div>
-                <div style={{ color: '#92400e', fontSize: '14px' }}>
-                  {getDisabledJourMessage(selectedDate, formData.service)}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2px' }}>
+                  <span style={{ color: '#d97706', marginRight: '2px' }}>⚠️</span>
+                  <span style={{ fontSize: '14px', color: '#92400e' }}>{getDisabledJourMessage(selectedDate, formData.service)}</span>
                 </div>
               </div>
             )}
