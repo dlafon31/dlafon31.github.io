@@ -214,9 +214,10 @@ const Component = () => {
   };
 
   const getServicesCliniques = () => {
-    if (!services || services.length === 0) return [];
+    const servicesAutorises = getServicesAutorises();
+    if (!servicesAutorises || servicesAutorises.length === 0) return [];
     
-    const servicesCliniques = services
+    const servicesCliniques = servicesAutorises
       .filter(service => service.gristHelper_Display2)
       .map(service => service.gristHelper_Display2)
       .filter((value, index, array) => array.indexOf(value) === index)
@@ -384,8 +385,8 @@ const Component = () => {
       clinicienNuit: nuitAstreinte ? nuitAstreinte.Clinicien.toString() : '',
       jour: !!jourAstreinte,
       nuit: !!nuitAstreinte,
-      jourValidated: jourAstreinte ? jourAstreinte.ValidationService === true : false,
-      nuitValidated: nuitAstreinte ? nuitAstreinte.ValidationService === true : false
+      jourValidated: jourAstreinte ? jourAstreinte.En_Suivi === true : false,
+      nuitValidated: nuitAstreinte ? nuitAstreinte.En_Suivi === true : false
     };
   };
 
@@ -560,7 +561,7 @@ const Component = () => {
 
           if (existingForService.length > 0) {
             const existing = existingForService[0];
-            if (existing.ValidationService === true) {
+            if (existing.En_Suivi === true) {
               console.log(`Astreinte validée ignorée pour ${formatDate(targetDate)}`);
               continue;
             }
@@ -712,7 +713,7 @@ const Component = () => {
                     key={index} 
                     style={{ 
                       background: isJourAstreinte(astreinte) ? '#dbeafe' : '#e0f2fe',
-                      border: astreinte.ValidationService === true ? '1px solid #10b981' : '1px solid #3b82f6',
+                      border: astreinte.En_Suivi === true ? '1px solid #10b981' : '1px solid #3b82f6',
                       color: isJourAstreinte(astreinte) ? '#1e40af' : '#0c4a6e', 
                       padding: '2px 4px', 
                       borderRadius: '3px', 
@@ -740,40 +741,32 @@ const Component = () => {
       }
     }
     
-    return (
-      <div>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(7, 1fr)', 
-          background: '#f3f4f6', 
-          border: '1px solid #e5e7eb' 
-        }}>
-          {dayHeaders.map(day => (
-            <div 
-              key={day} 
-              style={{ 
-                padding: '12px 8px', 
-                textAlign: 'center', 
-                fontWeight: '600', 
-                fontSize: '14px', 
-                color: '#374151' 
-              }}
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(7, 1fr)', 
-          background: 'white', 
-          border: '1px solid #e5e7eb', 
-          borderTop: 'none' 
-        }}>
-          {days}
-        </div>
-      </div>
-    );
+	return (
+	  <div style={{ 
+		display: 'grid', 
+		gridTemplateColumns: 'repeat(7, 1fr)', 
+	  }}>
+		{/* En-têtes des jours */}
+		{dayHeaders.map(day => (
+		  <div 
+			key={day} 
+			style={{ 
+			  padding: '12px 8px', 
+			  textAlign: 'center', 
+			  fontWeight: '600', 
+			  fontSize: '14px', 
+			  color: '#374151',
+			  background: '#f3f4f6',
+			  border: '1px solid #e5e7eb'
+			}}
+		  >
+			{day}
+		  </div>
+		))}
+		{/* Jours du mois */}
+		{days}
+	  </div>
+	);
   };
 
   const renderWeekView = () => {
@@ -837,7 +830,7 @@ const Component = () => {
               {isResponsable() ? '✏️ Gérer astreinte' : '👁️ Consulter astreinte'}
             </button>
             {sortedAstreintes.map((astreinte, index) => {
-              const isValidated = astreinte.ValidationService === true;
+              const isValidated = astreinte.En_Suivi === true;
               
               return (
                 <div 
@@ -894,16 +887,13 @@ const Component = () => {
     }
     
     return (
-      <div style={{ 
-        display: 'flex', 
-        background: 'white', 
-        borderRadius: '8px', 
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)', 
-        overflow: 'hidden' 
-      }}>
-        {days}
-      </div>
-    );
+	  <div style={{ 
+		display: 'grid', 
+		gridTemplateColumns: 'repeat(7, 1fr)', 
+	  }}>
+		{days}
+	  </div>
+	);
   };
 
   const getCurrentViewTitle = () => {
@@ -1241,15 +1231,6 @@ const Component = () => {
                     color: (formData.jourValidated || shouldDisableJourAstreinte(selectedDate, formData.service)) ? '#6b7280' : 'inherit'
                   }}>
                     ☀️ Astreinte de jour
-                    {formData.jourValidated && (
-                      <span style={{ 
-                        color: '#10b981', 
-                        marginLeft: '5px',
-                        fontSize: '12px'
-                      }}>
-                        ✓ Validée
-                      </span>
-                    )}
                   </span>
                 </label>
                 {formData.jour && (
@@ -1308,15 +1289,6 @@ const Component = () => {
                     color: formData.nuitValidated ? '#6b7280' : 'inherit'
                   }}>
                     🌙 Astreinte de nuit
-                    {formData.nuitValidated && (
-                      <span style={{ 
-                        color: '#10b981', 
-                        marginLeft: '5px',
-                        fontSize: '12px'
-                      }}>
-                        ✓ Validée
-                      </span>
-                    )}
                   </span>
                 </label>
                 {formData.nuit && (

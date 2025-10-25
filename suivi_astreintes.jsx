@@ -509,40 +509,32 @@ const Component = () => {
       }
     }
     
-    return (
-      <div>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(7, 1fr)', 
-          background: '#f3f4f6', 
-          border: '1px solid #e5e7eb' 
-        }}>
-          {dayHeaders.map(day => (
-            <div 
-              key={day} 
-              style={{ 
-                padding: '12px 8px', 
-                textAlign: 'center', 
-                fontWeight: '600', 
-                fontSize: '14px', 
-                color: '#374151' 
-              }}
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(7, 1fr)', 
-          background: 'white', 
-          border: '1px solid #e5e7eb', 
-          borderTop: 'none' 
-        }}>
-          {days}
-        </div>
-      </div>
-    );
+	return (
+	  <div style={{ 
+		display: 'grid', 
+		gridTemplateColumns: 'repeat(7, 1fr)', 
+	  }}>
+		{/* En-têtes des jours */}
+		{dayHeaders.map(day => (
+		  <div 
+			key={day} 
+			style={{ 
+			  padding: '12px 8px', 
+			  textAlign: 'center', 
+			  fontWeight: '600', 
+			  fontSize: '14px', 
+			  color: '#374151',
+			  background: '#f3f4f6',
+			  border: '1px solid #e5e7eb'
+			}}
+		  >
+			{day}
+		  </div>
+		))}
+		{/* Jours du mois */}
+		{days}
+	  </div>
+	);
   };
 
   const renderWeekView = () => {
@@ -644,16 +636,13 @@ const Component = () => {
     }
     
     return (
-      <div style={{ 
-        display: 'flex', 
-        background: 'white', 
-        borderRadius: '8px', 
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)', 
-        overflow: 'hidden' 
-      }}>
-        {days}
-      </div>
-    );
+	  <div style={{ 
+		display: 'grid', 
+		gridTemplateColumns: 'repeat(7, 1fr)', 
+	  }}>
+		{days}
+	  </div>
+	);
   };
 
   const getCurrentViewTitle = () => {
